@@ -22,7 +22,7 @@ class GameScreen extends StatelessWidget {
             children: [
               // Background image
               Image.asset(
-                'assets/images/schatduiken-main.jpg',
+                'assets/images/beach.jpg',
                 fit: BoxFit.cover,
               ),
               // Dark overlay
@@ -80,7 +80,7 @@ class _Header extends StatelessWidget {
           // Title image
           Image.asset(
             'assets/images/schatduiken.png',
-            height: 40,
+            height: 80,
             fit: BoxFit.contain,
           ),
           const Spacer(),
@@ -205,7 +205,7 @@ class _AntennaPanel extends StatelessWidget {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 4),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -226,15 +226,16 @@ class _AntennaPanel extends StatelessWidget {
               Icon(Symbols.sensors, color: AppColors.orange.withOpacity(0.6), size: 18),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Divider(color: AppColors.orange.withOpacity(0.25), height: 1),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           // 2×2 grid
           Expanded(
             child: GridView.count(
               crossAxisCount: 2,
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
+              childAspectRatio: 1.25,
               physics: const NeverScrollableScrollPhysics(),
               children: shells.map((s) => ShellCard(shell: s)).toList(),
             ),

@@ -64,6 +64,11 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
+    - assets/images/schelp-zand.png
+    - assets/images/schelp-groen.png
+    - assets/images/schelp-bruin.png
+    - assets/images/schelp-oranje.png
+    - assets/images/schelp-blauw.png
     - assets/images/schatduiken-main.jpg
     - assets/images/beach.jpg
     - assets/images/schatduiken.png
