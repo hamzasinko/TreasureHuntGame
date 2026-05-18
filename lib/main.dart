@@ -10,18 +10,24 @@ import 'screens/menu_screen.dart';
 import 'screens/countdown_screen.dart';
 import 'screens/game_screen.dart';
 import 'screens/victory_screen.dart';
+import 'package:window_manager/window_manager.dart';
+import 'package:flutter/foundation.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Force landscape for poolside tablets
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]);
-
-  // Hide status bar for full-screen kiosk feel
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
+  if (defaultTargetPlatform == TargetPlatform.windows ||
+      defaultTargetPlatform == TargetPlatform.linux ||
+      defaultTargetPlatform == TargetPlatform.macOS) {
+    await windowManager.ensureInitialized();
+    await windowManager.setFullScreen(true);
+  }
 
   runApp(
     ChangeNotifierProvider(

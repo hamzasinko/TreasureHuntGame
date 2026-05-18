@@ -5,6 +5,9 @@ import 'package:provider/provider.dart';
 import '../services/game_controller.dart';
 import '../config/app_colors.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:window_manager/window_manager.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -148,6 +151,20 @@ class _MenuScreenState extends State<MenuScreen>
                       label: 'HOW TO PLAY',
                       color: AppColors.blue,
                       onTap: () => _showHelp(context),
+                    ),
+                    const SizedBox(height: 12),
+                    _GlowButton(
+                      label: 'EXIT',
+                      color: AppColors.error,
+                      onTap: () async {
+                      if (defaultTargetPlatform == TargetPlatform.windows ||
+                          defaultTargetPlatform == TargetPlatform.linux ||
+                          defaultTargetPlatform == TargetPlatform.macOS) {
+                          await windowManager.close();
+                        } else {
+                          SystemNavigator.pop();
+                        }
+                      },
                     ),
                   ],
                 ),
