@@ -1,7 +1,8 @@
-// lib/screens/game_screen.dart
-
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
+import '../config/app_colors.dart';
 import '../models/game_config.dart';
 import '../models/shell_model.dart';
 import '../services/game_controller.dart';
@@ -13,21 +14,33 @@ class GameScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<GameController>(
-      builder: (_, gc, __) {
-        final allFound = gc.shells.every((s) => s.isFound);
+      builder: (ctx, gc, child) {
         return Scaffold(
-          backgroundColor: const Color(0xFF020D1E),
-          body: SafeArea(
-            child: Column(
-              children: [
-                _Header(gc: gc),
-                const SizedBox(height: 12),
-                Expanded(child: _ShellGrid(shells: gc.shells)),
-                const SizedBox(height: 12),
-                _Footer(gc: gc),
-                const SizedBox(height: 8),
-              ],
-            ),
+          backgroundColor: Colors.black,
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Background image
+              Image.asset(
+                'assets/images/schatduiken-main.jpg',
+                fit: BoxFit.cover,
+              ),
+              // Dark overlay
+              Container(color: AppColors.deepBrown.withOpacity(0.75)),
+              // Content
+              SafeArea(
+                child: Column(
+                  children: [
+                    _Header(gc: gc),
+                    const SizedBox(height: 8),
+                    Expanded(child: _AntennaRow(shells: gc.shells)),
+                    const SizedBox(height: 8),
+                    _Footer(gc: gc),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              ),
+            ],
           ),
         );
       },
@@ -48,46 +61,37 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final found = gc.shells.where((s) => s.isFound).length;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF030E22), Color(0xFF020D1E)],
-        ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.deepBrown.withOpacity(0.85),
         border: Border(
-          bottom: BorderSide(color: Color(0xFF1A3560), width: 1),
+          bottom: BorderSide(color: AppColors.orange.withOpacity(0.4), width: 1.5),
         ),
       ),
       child: Row(
         children: [
-          // Score
           _StatBox(
+            icon: Symbols.emoji_events,
             label: 'SCORE',
             value: '$found / ${GameConfig.totalShells}',
-            color: const Color(0xFF00C055),
+            color: AppColors.success,
           ),
           const Spacer(),
-          // Title
-          const Text(
-            '🐚 SHELL HUNT',
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 3,
-              color: Color(0xFF60B0E0),
-            ),
+          // Title image
+          Image.asset(
+            'assets/images/schatduiken.png',
+            height: 40,
+            fit: BoxFit.contain,
           ),
           const Spacer(),
-          // Timer (only if limited game)
           if (GameConfig.gameDurationSeconds > 0)
             _StatBox(
+              icon: Symbols.timer,
               label: 'TIME',
               value: _formatTime(gc.secondsRemaining),
               color: gc.secondsRemaining < 30
-                  ? const Color(0xFFFF4444)
-                  : const Color(0xFF40B0FF),
+                  ? AppColors.error
+                  : AppColors.orange,
             )
           else
             const SizedBox(width: 80),
@@ -98,74 +102,68 @@ class _Header extends StatelessWidget {
 }
 
 class _StatBox extends StatelessWidget {
+  final IconData icon;
   final String label, value;
   final Color color;
-  const _StatBox({required this.label, required this.value, required this.color});
+  const _StatBox({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return Row(
       children: [
-        Text(label,
-            style: TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 9,
-                letterSpacing: 2,
-                color: Colors.white.withOpacity(0.4))),
-        const SizedBox(height: 2),
-        Text(value,
-            style: TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                color: color)),
+        Icon(icon, color: color, size: 22),
+        const SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label,
+                style: GoogleFonts.cinzel(
+                    fontSize: 9,
+                    letterSpacing: 2,
+                    color: AppColors.sandDark)),
+            Text(value,
+                style: GoogleFonts.pirataOne(
+                    fontSize: 22,
+                    color: color)),
+          ],
+        ),
       ],
     );
   }
 }
 
-// ── Shell grid ─────────────────────────────────────────────────────────────
+// ── Antenna row — side by side ─────────────────────────────────────────────
 
-class _ShellGrid extends StatelessWidget {
+class _AntennaRow extends StatelessWidget {
   final List<ShellModel> shells;
-  const _ShellGrid({required this.shells});
+  const _AntennaRow({required this.shells});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
         children: [
-          // Antenna A label
-          _AntennaLabel(label: 'ANTENNA  A', subtitle: 'Shells 1 – 4'),
-          const SizedBox(height: 8),
+          // Antenna A — shells 1-4
           Expanded(
-            child: Row(
-              children: shells
-                  .sublist(0, 4)
-                  .map((s) => Expanded(
-                      child: Padding(
-                          padding: const EdgeInsets.all(4),
-                          child: ShellCard(shell: s))))
-                  .toList(),
+            child: _AntennaPanel(
+              label: 'ANTENNA A',
+              subtitle: 'Shells 1 – 4',
+              shells: shells.sublist(0, 4),
             ),
           ),
-          const SizedBox(height: 10),
-          const Divider(color: Color(0xFF1A3560), thickness: 1),
-          const SizedBox(height: 10),
-          // Antenna B label
-          _AntennaLabel(label: 'ANTENNA  B', subtitle: 'Shells 5 – 8'),
-          const SizedBox(height: 8),
+          const SizedBox(width: 12),
+          // Antenna B — shells 5-8
           Expanded(
-            child: Row(
-              children: shells
-                  .sublist(4, 8)
-                  .map((s) => Expanded(
-                      child: Padding(
-                          padding: const EdgeInsets.all(4),
-                          child: ShellCard(shell: s))))
-                  .toList(),
+            child: _AntennaPanel(
+              label: 'ANTENNA B',
+              subtitle: 'Shells 5 – 8',
+              shells: shells.sublist(4, 8),
             ),
           ),
         ],
@@ -174,38 +172,75 @@ class _ShellGrid extends StatelessWidget {
   }
 }
 
-class _AntennaLabel extends StatelessWidget {
+class _AntennaPanel extends StatelessWidget {
   final String label, subtitle;
-  const _AntennaLabel({required this.label, required this.subtitle});
+  final List<ShellModel> shells;
+  const _AntennaPanel({
+    required this.label,
+    required this.subtitle,
+    required this.shells,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 4, height: 28,
-          decoration: BoxDecoration(
-            color: const Color(0xFF2080FF),
-            borderRadius: BorderRadius.circular(2),
-          ),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.deepBrown.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.orange.withOpacity(0.4),
+          width: 1.5,
         ),
-        const SizedBox(width: 10),
-        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label,
-              style: const TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 3,
-                  color: Color(0xFF4090C0))),
-          Text(subtitle,
-              style: TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 9,
-                  letterSpacing: 2,
-                  color: Colors.white.withOpacity(0.3))),
-        ]),
-      ],
+      ),
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        children: [
+          // Antenna label
+          Row(
+            children: [
+              Container(
+                width: 4, height: 24,
+                decoration: BoxDecoration(
+                  color: AppColors.orange,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label,
+                      style: GoogleFonts.cinzel(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 3,
+                          color: AppColors.orange)),
+                  Text(subtitle,
+                      style: GoogleFonts.cinzel(
+                          fontSize: 9,
+                          letterSpacing: 2,
+                          color: AppColors.sandDark)),
+                ],
+              ),
+              const Spacer(),
+              Icon(Symbols.sensors, color: AppColors.orange.withOpacity(0.6), size: 18),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Divider(color: AppColors.orange.withOpacity(0.25), height: 1),
+          const SizedBox(height: 8),
+          // 2×2 grid
+          Expanded(
+            child: GridView.count(
+              crossAxisCount: 2,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              physics: const NeverScrollableScrollPhysics(),
+              children: shells.map((s) => ShellCard(shell: s)).toList(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -225,10 +260,17 @@ class _Footer extends StatelessWidget {
         children: [
           TextButton.icon(
             onPressed: gc.returnToMenu,
-            icon: const Icon(Icons.close, size: 16),
-            label: const Text('QUIT', style: TextStyle(letterSpacing: 2, fontSize: 12)),
+            icon: Icon(Symbols.logout, size: 16, color: AppColors.sandDark),
+            label: Text(
+              'QUIT',
+              style: GoogleFonts.cinzel(
+                letterSpacing: 2,
+                fontSize: 12,
+                color: AppColors.sandDark,
+              ),
+            ),
             style: TextButton.styleFrom(
-              foregroundColor: Colors.white.withOpacity(0.35),
+              foregroundColor: AppColors.sandDark,
             ),
           ),
         ],

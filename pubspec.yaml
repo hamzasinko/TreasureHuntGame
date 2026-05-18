@@ -65,6 +65,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/schatduiken-main.jpg
+    - assets/images/beach.jpg
     - assets/images/schatduiken.png
     - assets/images/logo.png
     - assets/sounds/correct.mp3

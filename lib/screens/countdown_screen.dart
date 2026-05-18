@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/game_controller.dart';
+import '../config/app_colors.dart';
 
 class CountdownScreen extends StatelessWidget {
   const CountdownScreen({super.key});
@@ -12,35 +13,49 @@ class CountdownScreen extends StatelessWidget {
     return Consumer<GameController>(
       builder: (_, gc, __) {
         return Scaffold(
-          backgroundColor: const Color(0xFF020810),
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'GET READY!',
-                  style: TextStyle(
-                    fontFamily: 'monospace',
-                    fontSize: 22,
-                    letterSpacing: 6,
-                    color: Colors.white.withOpacity(0.6),
-                    fontWeight: FontWeight.w700,
-                  ),
+          backgroundColor: Colors.black,
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Background image
+              Image.asset(
+                'assets/images/beach.jpg',
+                fit: BoxFit.cover,
+              ),
+              // Dark overlay so the countdown numbers are readable
+              Container(
+                color: AppColors.deepBrown.withOpacity(0.65),
+              ),
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'GET READY!',
+                        style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 42,
+                        letterSpacing: 6,
+                        color: AppColors.orange,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 60),
+                    _CountdownNumber(value: gc.countdown),
+                    const SizedBox(height: 60),
+                    Text(
+                      '   FIND ALL THE SHELLS   ',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 24,
+                        letterSpacing: 3,
+                        color: AppColors.sandLight.withOpacity(0.6),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 40),
-                _CountdownNumber(value: gc.countdown),
-                const SizedBox(height: 40),
-                Text(
-                  '🐚  FIND ALL THE SHELLS  🐚',
-                  style: TextStyle(
-                    fontFamily: 'monospace',
-                    fontSize: 14,
-                    letterSpacing: 3,
-                    color: Colors.white.withOpacity(0.4),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ]
           ),
         );
       },
@@ -104,17 +119,17 @@ class _CountdownNumberState extends State<_CountdownNumber>
             height: 160,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFF40B0FF).withOpacity(0.6), width: 2),
+              border: Border.all(color: AppColors.orange.withOpacity(0.7), width: 2),
               boxShadow: [
                 BoxShadow(
-                    color: const Color(0xFF2080FF).withOpacity(0.4),
+                    color: AppColors.orange.withOpacity(0.35),
                     blurRadius: 40,
                     spreadRadius: 10),
               ],
               gradient: RadialGradient(
                 colors: [
-                  const Color(0xFF1040A0).withOpacity(0.4),
-                  const Color(0xFF020810),
+                AppColors.deepBrown.withOpacity(0.8),
+                Colors.black.withOpacity(0.6),
                 ],
               ),
             ),
@@ -125,7 +140,7 @@ class _CountdownNumberState extends State<_CountdownNumber>
                         fontFamily: 'monospace',
                         fontSize: _displayed == 0 ? 60 : 80,
                         fontWeight: FontWeight.w900,
-                        color: _displayed == 0 ? const Color(0xFF00FF88) : const Color(0xFF80D0FF),
+                        color: _displayed == 0 ? AppColors.orange : AppColors.orange,
                       ),
             ),
           ),
