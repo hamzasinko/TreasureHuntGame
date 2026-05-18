@@ -12,6 +12,7 @@ import 'screens/game_screen.dart';
 import 'screens/victory_screen.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter/foundation.dart';
+import 'screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,8 +53,28 @@ class PoolShellHuntApp extends StatelessWidget {
           surface: AppColors.deepBrown,
         ),
       ),
-      home: const _RootNavigator(),
+      home: const _AppEntry(),
     );
+  }
+}
+
+class _AppEntry extends StatefulWidget {
+  const _AppEntry();
+  @override
+  State<_AppEntry> createState() => _AppEntryState();
+}
+
+class _AppEntryState extends State<_AppEntry> {
+  bool _splashDone = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_splashDone) {
+      return SplashScreen(
+        onDone: () => setState(() => _splashDone = true),
+      );
+    }
+    return const _RootNavigator();
   }
 }
 
