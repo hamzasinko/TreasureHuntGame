@@ -1,5 +1,6 @@
 // lib/main.dart
 
+import 'package:app_treasuregame/config/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -41,8 +42,8 @@ class PoolShellHuntApp extends StatelessWidget {
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF020810),
         colorScheme: ColorScheme.dark(
-          primary: const Color(0xFF40B0FF),
-          surface: const Color(0xFF0A1830),
+          primary: AppColors.blue,
+          surface: AppColors.deepBrown,
         ),
       ),
       home: const _RootNavigator(),

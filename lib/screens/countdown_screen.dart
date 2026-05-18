@@ -120,7 +120,7 @@ class _CountdownNumberState extends State<_CountdownNumber>
             ),
             alignment: Alignment.center,
             child: Text(
-                      _displayed == 0 ? 'GO!' : '$_displayed',
+                      _displayed <= 0 ? 'GO!' : '$_displayed',
                       style: TextStyle(
                         fontFamily: 'monospace',
                         fontSize: _displayed == 0 ? 60 : 80,

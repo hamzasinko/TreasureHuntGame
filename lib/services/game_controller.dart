@@ -59,7 +59,7 @@ class GameController extends ChangeNotifier {
       _led.countdownPulse();
       notifyListeners();
 
-      if (countdown < 0) {
+      if (countdown <= 0) {
         t.cancel();
         _startGame();
       }
