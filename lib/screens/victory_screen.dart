@@ -1,8 +1,9 @@
-// lib/screens/victory_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
+import '../config/app_colors.dart';
 import '../services/game_controller.dart';
 
 class VictoryScreen extends StatefulWidget {
@@ -22,14 +23,12 @@ class _VictoryScreenState extends State<VictoryScreen>
   void initState() {
     super.initState();
     _anim = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 900));
+        vsync: this, duration: const Duration(milliseconds: 1000));
     _scale = Tween<double>(begin: 0.5, end: 1.0).animate(
         CurvedAnimation(parent: _anim, curve: Curves.elasticOut));
     _fade = Tween<double>(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(parent: _anim, curve: Curves.easeOut));
     _anim.forward();
-
-    // Listen for any key / tap to go back to menu
     ServicesBinding.instance.keyboard.addHandler(_onKey);
   }
 
@@ -58,75 +57,173 @@ class _VictoryScreenState extends State<VictoryScreen>
     return GestureDetector(
       onTap: _goBack,
       child: Scaffold(
-        backgroundColor: const Color(0xFF020810),
+        backgroundColor: Colors.black,
         body: Stack(
+          fit: StackFit.expand,
           children: [
-            // Particle / confetti overlay
-            const _ConfettiBackground(),
+            // Background image
+            Image.asset(
+              'assets/images/schatduiken-main.jpg',
+              fit: BoxFit.cover,
+            ),
+            // Dark brown overlay
+            Container(color: AppColors.deepBrown.withOpacity(0.78)),
 
+            // Coin/particle effect
+            const _CoinParticles(),
+
+            // Main content
             Center(
               child: FadeTransition(
                 opacity: _fade,
                 child: ScaleTransition(
                   scale: _scale,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text('🏆', style: TextStyle(fontSize: 80)),
-                      const SizedBox(height: 24),
-                      ShaderMask(
-                        shaderCallback: (bounds) => const LinearGradient(
-                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ).createShader(bounds),
-                        child: const Text(
-                          'CONGRATULATIONS!',
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 28,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 4,
-                            color: Colors.white,
+                  child: Container(
+                    width: 560,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 48, vertical: 40),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2A1A0A).withOpacity(0.92),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: AppColors.orange.withOpacity(0.8), width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.orange.withOpacity(0.25),
+                          blurRadius: 40,
+                          spreadRadius: 8,
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Corner decorations
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Icon(Symbols.skull,
+                                color: AppColors.orange.withOpacity(0.5),
+                                size: 22),
+                            Icon(Symbols.anchor,
+                                color: AppColors.orange.withOpacity(0.5),
+                                size: 22),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+
+                        // Trophy icon
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                                color: AppColors.orange.withOpacity(0.6),
+                                width: 2),
+                            color: AppColors.deepBrown,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.orange.withOpacity(0.3),
+                                blurRadius: 20,
+                                spreadRadius: 4,
+                              ),
+                            ],
+                          ),
+                          child: Icon(Symbols.emoji_events,
+                              color: AppColors.orange, size: 56),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Title
+                        Text(
+                          'SCHAT GEVONDEN!',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.pirataOne(
+                            fontSize: 38,
+                            color: AppColors.orange,
+                            shadows: [
+                              Shadow(
+                                color: AppColors.orange.withOpacity(0.5),
+                                blurRadius: 16,
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'ALL SHELLS FOUND',
-                        style: TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 14,
-                          letterSpacing: 5,
-                          color: Colors.white.withOpacity(0.55),
+                        const SizedBox(height: 8),
+
+                        // Subtitle
+                        Text(
+                          'ALL SHELLS DISCOVERED',
+                          style: GoogleFonts.cinzel(
+                            fontSize: 13,
+                            letterSpacing: 5,
+                            color: AppColors.sandDark,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text('🐚', style: TextStyle(fontSize: 28)),
-                          SizedBox(width: 8),
-                          Text('🐚', style: TextStyle(fontSize: 28)),
-                          SizedBox(width: 8),
-                          Text('🐚', style: TextStyle(fontSize: 28)),
-                          SizedBox(width: 8),
-                          Text('🐚', style: TextStyle(fontSize: 28)),
-                          SizedBox(width: 8),
-                          Text('🐚', style: TextStyle(fontSize: 28)),
-                          SizedBox(width: 8),
-                          Text('🐚', style: TextStyle(fontSize: 28)),
-                          SizedBox(width: 8),
-                          Text('🐚', style: TextStyle(fontSize: 28)),
-                          SizedBox(width: 8),
-                          Text('🐚', style: TextStyle(fontSize: 28)),
-                        ],
-                      ),
-                      const SizedBox(height: 48),
-                      _PulsingText(
-                        text: 'TAP ANYWHERE TO CONTINUE',
-                      ),
-                    ],
+                        const SizedBox(height: 24),
+
+                        // Divider with anchors
+                        Row(
+                          children: [
+                            Expanded(
+                                child: Divider(
+                                    color:
+                                        AppColors.orange.withOpacity(0.3))),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              child: Icon(Symbols.anchor,
+                                  color: AppColors.orange.withOpacity(0.5),
+                                  size: 16),
+                            ),
+                            Expanded(
+                                child: Divider(
+                                    color:
+                                        AppColors.orange.withOpacity(0.3))),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Shell row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            8,
+                            (i) => Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 4),
+                              child: Text('🐚',
+                                  style: TextStyle(
+                                      fontSize: 24,
+                                      shadows: [
+                                        Shadow(
+                                          color: AppColors.orange
+                                              .withOpacity(0.6),
+                                          blurRadius: 8,
+                                        )
+                                      ])),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+
+                        // Tap to continue
+                        _PulsingText(text: 'TAP ANYWHERE TO CONTINUE'),
+
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Icon(Symbols.anchor,
+                                color: AppColors.orange.withOpacity(0.5),
+                                size: 22),
+                            Icon(Symbols.skull,
+                                color: AppColors.orange.withOpacity(0.5),
+                                size: 22),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -157,9 +254,9 @@ class _PulsingTextState extends State<_PulsingText>
   void initState() {
     super.initState();
     _anim = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1200))
+        vsync: this, duration: const Duration(milliseconds: 1400))
       ..repeat(reverse: true);
-    _opacity = Tween<double>(begin: 0.2, end: 0.8).animate(_anim);
+    _opacity = Tween<double>(begin: 0.2, end: 1.0).animate(_anim);
   }
 
   @override
@@ -172,15 +269,14 @@ class _PulsingTextState extends State<_PulsingText>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _opacity,
-      builder: (_, __) => Opacity(
+      builder: (animCtx, animChild) => Opacity(
         opacity: _opacity.value,
         child: Text(
           widget.text,
-          style: const TextStyle(
-            fontFamily: 'monospace',
-            fontSize: 11,
+          style: GoogleFonts.cinzel(
+            fontSize: 12,
             letterSpacing: 4,
-            color: Color(0xFF60A0D0),
+            color: AppColors.sandLight,
           ),
         ),
       ),
@@ -188,16 +284,16 @@ class _PulsingTextState extends State<_PulsingText>
   }
 }
 
-// ── Confetti / bubbles background ─────────────────────────────────────────
+// ── Coin particles ─────────────────────────────────────────────────────────
 
-class _ConfettiBackground extends StatefulWidget {
-  const _ConfettiBackground();
+class _CoinParticles extends StatefulWidget {
+  const _CoinParticles();
 
   @override
-  State<_ConfettiBackground> createState() => _ConfettiBackgroundState();
+  State<_CoinParticles> createState() => _CoinParticlesState();
 }
 
-class _ConfettiBackgroundState extends State<_ConfettiBackground>
+class _CoinParticlesState extends State<_CoinParticles>
     with SingleTickerProviderStateMixin {
   late AnimationController _anim;
 
@@ -205,7 +301,7 @@ class _ConfettiBackgroundState extends State<_ConfettiBackground>
   void initState() {
     super.initState();
     _anim = AnimationController(
-        vsync: this, duration: const Duration(seconds: 4))
+        vsync: this, duration: const Duration(seconds: 3))
       ..repeat();
   }
 
@@ -219,36 +315,51 @@ class _ConfettiBackgroundState extends State<_ConfettiBackground>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _anim,
-      builder: (_, __) => CustomPaint(
+      builder: (confCtx, confChild) => CustomPaint(
         size: MediaQuery.of(context).size,
-        painter: _ConfettiPainter(_anim.value),
+        painter: _CoinPainter(_anim.value),
       ),
     );
   }
 }
 
-class _ConfettiPainter extends CustomPainter {
+class _CoinPainter extends CustomPainter {
   final double t;
-  _ConfettiPainter(this.t);
+  _CoinPainter(this.t);
 
   static const _colors = [
-    Color(0xFFFFD700), Color(0xFF00C055), Color(0xFF40B0FF),
-    Color(0xFFFF6600), Color(0xFFFF40A0), Color(0xFFAA60FF),
+    AppColors.orange,
+    AppColors.sandLight,
+    AppColors.warning,
+    AppColors.sandDark,
+    Color(0xFFFFD700),
   ];
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (int i = 0; i < 40; i++) {
-      final seed = i * 137.5;
-      final x = size.width  * ((seed * 0.618) % 1.0);
-      final progress = (t + i / 40.0) % 1.0;
-      final y = size.height * (1.0 - progress);
-      final col = _colors[i % _colors.length].withOpacity(0.5);
+    for (int i = 0; i < 35; i++) {
+      final seed  = i * 137.5;
+      final x     = size.width  * ((seed * 0.618) % 1.0);
+      final progress = (t + i / 35.0) % 1.0;
+      final y     = size.height * (1.0 - progress);
+      final col   = _colors[i % _colors.length].withOpacity(0.45);
       final paint = Paint()..color = col;
-      canvas.drawCircle(Offset(x, y), 4 + (i % 4).toDouble(), paint);
+      final radius = 3.0 + (i % 4).toDouble();
+      // Alternate between circles (coins) and small diamonds
+      if (i % 3 == 0) {
+        canvas.drawCircle(Offset(x, y), radius, paint);
+      } else {
+        final path = Path()
+          ..moveTo(x, y - radius)
+          ..lineTo(x + radius * 0.6, y)
+          ..lineTo(x, y + radius)
+          ..lineTo(x - radius * 0.6, y)
+          ..close();
+        canvas.drawPath(path, paint);
+      }
     }
   }
 
   @override
-  bool shouldRepaint(_ConfettiPainter old) => true;
+  bool shouldRepaint(_CoinPainter old) => true;
 }
