@@ -114,22 +114,24 @@ class _StatBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: color, size: 22),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        Text(label,
+          style: GoogleFonts.cinzel(
+            fontSize: 24,
+            letterSpacing: 2,
+            color: AppColors.sandDark)),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(label,
-                style: GoogleFonts.cinzel(
-                    fontSize: 9,
-                    letterSpacing: 2,
-                    color: AppColors.sandDark)),
+            Icon(icon, color: color, size: 28),
+            const SizedBox(width: 8),
             Text(value,
-                style: GoogleFonts.pirataOne(
-                    fontSize: 22,
-                    color: color)),
+              style: GoogleFonts.pirataOne(
+                fontSize: 24,
+                color: color)),
           ],
         ),
       ],
@@ -199,25 +201,25 @@ class _AntennaPanel extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 4, height: 24,
+                width: 4, height: 64,
                 decoration: BoxDecoration(
                   color: AppColors.orange,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 6),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(label,
                       style: GoogleFonts.cinzel(
-                          fontSize: 11,
+                          fontSize: 24,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 3,
                           color: AppColors.orange)),
                   Text(subtitle,
                       style: GoogleFonts.cinzel(
-                          fontSize: 9,
+                          fontSize: 24,
                           letterSpacing: 2,
                           color: AppColors.sandDark)),
                 ],
@@ -231,13 +233,16 @@ class _AntennaPanel extends StatelessWidget {
           const SizedBox(height: 4),
           // 2×2 grid
           Expanded(
-            child: GridView.count(
-              crossAxisCount: 2,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              childAspectRatio: 1.25,
-              physics: const NeverScrollableScrollPhysics(),
-              children: shells.map((s) => ShellCard(shell: s)).toList(),
+            child: Center(
+              child: GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+                childAspectRatio: 1.25,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                children: shells.map((s) => ShellCard(shell: s)).toList(),
+              ),
             ),
           ),
         ],
@@ -266,7 +271,7 @@ class _Footer extends StatelessWidget {
               'QUIT',
               style: GoogleFonts.cinzel(
                 letterSpacing: 2,
-                fontSize: 12,
+                fontSize: 24,
                 color: AppColors.sandDark,
               ),
             ),
