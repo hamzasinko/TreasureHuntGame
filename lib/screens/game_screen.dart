@@ -20,14 +20,11 @@ class GameScreen extends StatelessWidget {
           body: Stack(
             fit: StackFit.expand,
             children: [
-              // Background image
               Image.asset(
                 'assets/images/beach.jpg',
                 fit: BoxFit.cover,
               ),
-              // Dark overlay
               Container(color: AppColors.deepBrown.withOpacity(0.75)),
-              // Content
               SafeArea(
                 child: Column(
                   children: [
@@ -77,7 +74,6 @@ class _Header extends StatelessWidget {
             color: AppColors.success,
           ),
           const Spacer(),
-          // Title image
           Image.asset(
             'assets/images/schatduiken.png',
             height: 80,
@@ -151,7 +147,6 @@ class _AntennaRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
-          // Antenna A — shells 1-4
           Expanded(
             child: _AntennaPanel(
               label: 'ANTENNA A',
@@ -160,7 +155,6 @@ class _AntennaRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          // Antenna B — shells 5-8
           Expanded(
             child: _AntennaPanel(
               label: 'ANTENNA B',
@@ -197,40 +191,36 @@ class _AntennaPanel extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       child: Column(
         children: [
-          // Antenna label
-          Row(
+          // ── CENTERED HEADER ───────────────────────────────
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                width: 4, height: 64,
-                decoration: BoxDecoration(
+              Text(
+                label,
+                style: GoogleFonts.cinzel(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 3,
                   color: AppColors.orange,
-                  borderRadius: BorderRadius.circular(2),
                 ),
+                textAlign: TextAlign.center,
               ),
-              const SizedBox(width: 6),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label,
-                      style: GoogleFonts.cinzel(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 3,
-                          color: AppColors.orange)),
-                  Text(subtitle,
-                      style: GoogleFonts.cinzel(
-                          fontSize: 24,
-                          letterSpacing: 2,
-                          color: AppColors.sandDark)),
-                ],
+              Text(
+                subtitle,
+                style: GoogleFonts.cinzel(
+                  fontSize: 24,
+                  letterSpacing: 2,
+                  color: AppColors.sandDark,
+                ),
+                textAlign: TextAlign.center,
               ),
-              const Spacer(),
-              Icon(Symbols.sensors, color: AppColors.orange.withOpacity(0.6), size: 18),
             ],
           ),
+
           const SizedBox(height: 4),
           Divider(color: AppColors.orange.withOpacity(0.25), height: 1),
           const SizedBox(height: 4),
+
           // 2×2 grid
           Expanded(
             child: Center(
