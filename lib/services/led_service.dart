@@ -1,5 +1,3 @@
-// lib/services/led_service.dart
-
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -23,73 +21,96 @@ class LedService {
     debugPrint('[LED] → $cmd');
   }
 
-  // ── Shell flash helpers ─────────────────────────────────────────────────
+  // ── Shell feedback ──────────────────────────────────────────────────────
 
-  /// Flash green 3 times then hold green (correct shell)
   void shellCorrect(int shell) {
     final from = _pad(GameConfig.ledStartForShell(shell));
     final to   = _pad(GameConfig.ledEndForShell(shell));
-    // strobe green 3 times quickly, then set solid green background
     _send('setStrobeRGBW 000 255 000 000');
     _send('strobe 03 080 080');
-    // hold green after flash settles
-    Future.delayed(const Duration(milliseconds: 600), () {
+    Future.delayed(const Duration(milliseconds: 100), () {
       _send('setBG 000 255 000 000 $from $to');
     });
   }
 
-  /// Flash red 3 times then hold red (wrong antenna)
   void shellWrong(int shell) {
     final from = _pad(GameConfig.ledStartForShell(shell));
     final to   = _pad(GameConfig.ledEndForShell(shell));
     _send('setStrobeRGBW 255 000 000 000');
     _send('strobe 03 080 080');
-    Future.delayed(const Duration(milliseconds: 600), () {
+    Future.delayed(const Duration(milliseconds: 100), () {
       _send('setBG 255 000 000 000 $from $to');
     });
   }
 
-  /// Clear a single shell lane back to idle blue
   void shellOff(int shell) {
     final from = _pad(GameConfig.ledStartForShell(shell));
     final to   = _pad(GameConfig.ledEndForShell(shell));
     _send('setBG 000 000 000 000 $from $to');
   }
 
-  // ── Global effects ──────────────────────────────────────────────────────
+  // ── Global ──────────────────────────────────────────────────────────────
 
   void allOff() => _send('allOff');
 
   void setBgBlue() => _send('setBG 000 050 255 000 000 081');
 
-  /// Countdown pulse — white strobe single flash per tick
-  void countdownPulse() {
-    _send('setStrobeRGBW 255 255 255 000');
-    _send('strobe 01 120 000');
+  void setBgIdle() => _send('setBG 080 030 000 000 000 081');
+
+  // ── Countdown ───────────────────────────────────────────────────────────
+
+  void countdownPulse(int secondsLeft) {
+    _send('allOff');
+    switch (secondsLeft) {
+      case 5: _send('setBG 000 000 255 000 000 081'); break; // blue
+      case 4: _send('setBG 000 255 000 000 000 081'); break; // green
+      case 3: _send('setBG 000 255 255 000 000 081'); break; // cyan
+      case 2: _send('setBG 255 255 000 000 000 081'); break; // yellow
+      case 1: _send('setBG 255 000 000 000 000 081'); break; // red
+      default: _send('setBG 255 000 000 000 000 081');
+    }
+    Future.delayed(const Duration(milliseconds: 800), () => _send('allOff'));
   }
 
-  /// Game start — all-colour race for 2 seconds then settle to blue
+  void countdownGo() {
+    _send('allOff');
+    Future.delayed(const Duration(milliseconds: 100), () => _send('setBG 255 255 255 000 000 081'));
+    Future.delayed(const Duration(milliseconds: 400), () => _send('allOff'));
+    Future.delayed(const Duration(milliseconds: 550), () => _send('setBG 255 255 255 000 000 081'));
+    Future.delayed(const Duration(milliseconds: 850), () => _send('allOff'));
+    Future.delayed(const Duration(milliseconds: 1000), () => _send('setBG 255 255 255 000 000 081'));
+    Future.delayed(const Duration(milliseconds: 1300), () => _send('allOff'));
+    Future.delayed(const Duration(milliseconds: 1500), () => setBgIdle());
+  }
+
+  // ── Game start ──────────────────────────────────────────────────────────
+
   void gameStartEffect() {
     _send('looprace A y');
     Future.delayed(const Duration(seconds: 2), () {
       _send('looprace A n');
       _send('stopRace A');
-      setBgBlue();
+      setBgIdle();
     });
   }
 
-  /// Victory — fast multi-colour disco (50ms per blink, 100 blinks)
+  // ── Victory ─────────────────────────────────────────────────────────────
+
   void victoryEffect() {
     _send('allOff');
     Future.delayed(const Duration(milliseconds: 100), () {
-      _send('discoA 08 0050 0100'); // 50ms per blink = fast
+      _send('discoA 08 0050 0100');
     });
+    _send('looprace A y');
   }
+
+  // ── Stop all ────────────────────────────────────────────────────────────
 
   void stopAll() {
     _send('looprace A n');
     _send('stopRace A');
     _send('allOff');
+    _send('setBgOff');
   }
 
   void dispose() {

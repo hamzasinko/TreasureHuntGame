@@ -1,15 +1,5 @@
-// lib/services/rfid_service.dart
-//
-// Connects to the XN-185 controller over USB serial (flutter_libserialport),
-// sends the two init commands, then streams parsed tag events.
-//
-// Message format received from XN-185:
-//   X002B[TD=LB1:SHELL1]   -> tag detected,  reader X002, label LB1, tag SHELL1
-//   X002B[TR=LB1:SHELL1]   -> tag removed,   reader X002, label LB1, tag SHELL1
-
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
 import '../models/game_config.dart';
@@ -18,10 +8,10 @@ enum TagEventType { detected, removed }
 
 class TagEvent {
   final TagEventType type;
-  final String readerPrefix; // 'X002' or 'X007'
-  final int labelIndex;      // 1-based (LB1 = 1)
+  final String readerPrefix;
+  final int labelIndex;
   final String tagId;
-  final int shellNumber;     // 1-8
+  final int shellNumber;
 
   TagEvent({
     required this.type,
@@ -47,17 +37,13 @@ class RfidService {
 
   Stream<TagEvent> get events => _controller.stream;
 
-  // Helper: print all available serial ports to the debug console.
-  // Check here when first setting up to find the right port name.
   static void listPorts() {
     final ports = SerialPort.availablePorts;
     debugPrint('[RFID] Available serial ports: $ports');
   }
 
-  // Connect and initialise the XN-185 over USB serial.
   Future<void> connect() async {
     listPorts();
-
     try {
       _port = SerialPort(GameConfig.xn185SerialPort);
 
@@ -67,7 +53,6 @@ class RfidService {
         return;
       }
 
-      // Configure to match XN-185 serial settings
       final config = SerialPortConfig()
         ..baudRate  = GameConfig.xn185BaudRate
         ..bits      = 8
@@ -79,7 +64,6 @@ class RfidService {
       debugPrint('[RFID] Opened ${GameConfig.xn185SerialPort} '
           '@ ${GameConfig.xn185BaudRate} baud');
 
-      // Start listening to the incoming stream
       _reader = SerialPortReader(_port!);
       _sub = _reader!.stream.listen(
         _onData,
@@ -87,18 +71,27 @@ class RfidService {
         cancelOnError: false,
       );
 
-      // Wait briefly then send the two init commands so XN-185 switches
-      // to label-reading mode on both reader ports.
-      await Future.delayed(const Duration(milliseconds: 300));
-      _send(GameConfig.initReader1); // X002S[10:3]
-      await Future.delayed(const Duration(milliseconds: 100));
-      _send(GameConfig.initReader2); // X007S[10:3]
+      await Future.delayed(const Duration(milliseconds: 500));
+      _send(GameConfig.initReader1);
+      await Future.delayed(const Duration(milliseconds: 500));
+      _send(GameConfig.initReader2);
+      await Future.delayed(const Duration(milliseconds: 500));
+      _send(GameConfig.initReader1);
+      await Future.delayed(const Duration(milliseconds: 500));
+      _send(GameConfig.initReader2);
     } catch (e) {
       debugPrint('[RFID] Connect exception: $e');
     }
   }
 
-  // Write a command string to the serial port (appends CR+LF).
+  Future<void> reinit() async {
+    debugPrint('[RFID] Reinitialising readers...');
+    await Future.delayed(const Duration(milliseconds: 200));
+    _send(GameConfig.initReader1);
+    await Future.delayed(const Duration(milliseconds: 200));
+    _send(GameConfig.initReader2);
+  }
+
   void _send(String cmd) {
     if (_port == null || !_port!.isOpen) return;
     final bytes = Uint8List.fromList(ascii.encode('$cmd\r\n'));
@@ -106,10 +99,8 @@ class RfidService {
     debugPrint('[RFID] Sent: $cmd');
   }
 
-  // Accumulate incoming bytes into a string buffer and parse complete messages.
   void _onData(Uint8List data) {
     _buffer += ascii.decode(data, allowInvalid: true);
-    // Each XN-185 message ends with ']'
     while (true) {
       final end = _buffer.indexOf(']');
       if (end == -1) break;
@@ -119,7 +110,6 @@ class RfidService {
     }
   }
 
-  // Parses: X002B[TD=LB1:SHELL1]
   static final _msgRegex = RegExp(
     r'(X\d{3})B\[(TD|TR)=LB(\d+):([^\]]+)\]',
   );
@@ -127,7 +117,9 @@ class RfidService {
   void _parseMessage(String msg) {
     final match = _msgRegex.firstMatch(msg);
     if (match == null) {
-      debugPrint('[RFID] Unrecognised: $msg');
+      debugPrint('[RFID] Unrecognised (not in label mode?): $msg');
+      _send(GameConfig.initReader1);
+      _send(GameConfig.initReader2);
       return;
     }
 
