@@ -149,7 +149,7 @@ class _AntennaRow extends StatelessWidget {
         children: [
           Expanded(
             child: _AntennaPanel(
-              label: 'ANTENNA A',
+              label: 'A',
               subtitle: 'Shells 1 – 4',
               shells: shells.sublist(0, 4),
             ),
@@ -157,7 +157,7 @@ class _AntennaRow extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: _AntennaPanel(
-              label: 'ANTENNA B',
+              label: 'B',
               subtitle: 'Shells 5 – 8',
               shells: shells.sublist(4, 8),
             ),
@@ -198,7 +198,7 @@ class _AntennaPanel extends StatelessWidget {
               Text(
                 label,
                 style: GoogleFonts.cinzel(
-                  fontSize: 24,
+                  fontSize: 32,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 3,
                   color: AppColors.orange,
