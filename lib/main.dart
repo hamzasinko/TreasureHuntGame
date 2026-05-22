@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'services/game_controller.dart';
-import 'services/rfid_service.dart';
 import 'screens/menu_screen.dart';
 import 'screens/countdown_screen.dart';
 import 'screens/game_screen.dart';
@@ -13,6 +12,7 @@ import 'screens/victory_screen.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'screens/splash_screen.dart';
+import 'models/game_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +29,8 @@ void main() async {
     await windowManager.ensureInitialized();
     await windowManager.setFullScreen(true);
   }
+
+  await GameConfig.loadFromPrefs();
 
   runApp(
     ChangeNotifierProvider(

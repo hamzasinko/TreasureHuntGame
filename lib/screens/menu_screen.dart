@@ -8,6 +8,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'settings_screen.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -145,7 +146,15 @@ class _MenuScreenState extends State<MenuScreen>
                       ),
                     ),
                     const SizedBox(height: 12),
-
+                    _GlowButton(
+                      label: 'SETTINGS',
+                      color: AppColors.sandDark,
+                      onTap: () => showDialog(
+                        context: context,
+                        builder: (dialogCtx) => const SettingsScreen(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     // HELP button — unchanged
                     _GlowButton(
                       label: 'HOW TO PLAY',
