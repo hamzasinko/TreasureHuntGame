@@ -8,6 +8,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
 import '../config/app_colors.dart';
+import '../services/audio_service.dart';
 
 const String _settingsPin = '5055';
 
@@ -319,6 +320,7 @@ class _SettingsForm extends StatefulWidget {
 
 class _SettingsFormState extends State<_SettingsForm> {
   final _formKey = GlobalKey<FormState>();
+  final audioPlayer = AudioService();
 
   String _selectedPort = Env.serialPort;
   List<String> _availablePorts = [];
@@ -328,6 +330,11 @@ class _SettingsFormState extends State<_SettingsForm> {
   late TextEditingController _ledPort;
   late TextEditingController _gameDuration;
   late TextEditingController _countdownSeconds;
+
+  // SOUND SETTINGS
+  double _generalVolume = 1.0;
+  bool _soundApplied = false;
+
 
   bool _loading = true;
   bool _saved = false;
@@ -365,6 +372,7 @@ class _SettingsFormState extends State<_SettingsForm> {
       _gameDuration.text     = prefs.getInt('gameDuration')?.toString()     ?? '0';
       _countdownSeconds.text = prefs.getInt('countdownSeconds')?.toString() ?? '3';
       _loading               = false;
+      _generalVolume = prefs.getDouble('generalVolume') ?? 1.0;
     });
   }
 
@@ -522,252 +530,317 @@ class _SettingsFormState extends State<_SettingsForm> {
           ),
         ],
       ),
-      child: Column(
+      child: DefaultTabController(
+        length: 2,
+        child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          // ── Header ────────────────────────────────────────────────────
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            decoration: BoxDecoration(
-              color: AppColors.deepBrown.withOpacity(0.8),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(10),
-                topRight: Radius.circular(10),
+          children: [
+
+            // ── Header ────────────────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              decoration: BoxDecoration(
+                color: AppColors.deepBrown.withOpacity(0.8),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(10),
+                  topRight: Radius.circular(10),
+                ),
+                border: Border(
+                    bottom:
+                        BorderSide(color: AppColors.orange.withOpacity(0.4))),
               ),
-              border: Border(
-                  bottom:
-                      BorderSide(color: AppColors.orange.withOpacity(0.4))),
+              child: Row(children: [
+                Icon(Symbols.settings, color: AppColors.orange, size: 22),
+                const SizedBox(width: 12),
+                Text('SETTINGS',
+                    style: GoogleFonts.pirataOne(
+                        fontSize: 22,
+                        color: AppColors.orange,
+                        letterSpacing: 3)),
+                const Spacer(),
+                GestureDetector(
+                  onTap: widget.onClose,
+                  child:
+                      Icon(Symbols.close, color: AppColors.sandDark, size: 20),
+                ),
+              ]),
             ),
-            child: Row(children: [
-              Icon(Symbols.settings, color: AppColors.orange, size: 22),
-              const SizedBox(width: 12),
-              Text('SETTINGS',
-                  style: GoogleFonts.pirataOne(
-                      fontSize: 22,
-                      color: AppColors.orange,
-                      letterSpacing: 3)),
-              const Spacer(),
-              GestureDetector(
-                onTap: widget.onClose,
-                child:
-                    Icon(Symbols.close, color: AppColors.sandDark, size: 20),
+
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.deepBrown.withOpacity(0.8),
+                border: Border(
+                  bottom: BorderSide(color: AppColors.orange.withOpacity(0.4)),
+                ),
               ),
-            ]),
-          ),
+              child: TabBar(
+                indicatorColor: AppColors.orange,
+                labelColor: AppColors.orange,
+                unselectedLabelColor: AppColors.sandDark,
+                tabs: [
+                  Tab(child: Text("GENERAL", style: GoogleFonts.cinzel(letterSpacing: 2))),
+                  Tab(child: Text("SOUND", style: GoogleFonts.cinzel(letterSpacing: 2))),
+                ],
+              ),
+            ),
 
-          if (_loading)
-            const Padding(
-              padding: EdgeInsets.all(40),
-              child: CircularProgressIndicator(),
-            )
-          else
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── RFID ────────────────────────────────────────────
-                    _sectionLabel('RFID CONTROLLER'),
-                    const SizedBox(height: 12),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  // TAB 1 — GENERAL
+                  _buildGeneralTab(),
 
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Serial port dropdown — manually built to match field height
-                        Expanded(
-                          flex: 2,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Label row — same height as TextFormField floating label
-                              SizedBox(
-                                height: _labelHeight,
-                                child: Row(
-                                  children: [
-                                    Text('Serial Port',
-                                        style: GoogleFonts.cinzel(
-                                            fontSize: 11,
-                                            color: AppColors.sandDark,
-                                            letterSpacing: 1)),
-                                    const Spacer(),
-                                    GestureDetector(
-                                      onTap: _refreshPorts,
-                                      child: Icon(Symbols.refresh,
-                                          color: AppColors.orange
-                                              .withOpacity(0.6),
-                                          size: 16),
+                  // TAB 2 — SOUND
+                  _buildSoundTab(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGeneralTab() {
+  return Padding(
+    padding: const EdgeInsets.all(24),
+    child: Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+
+            // ── LOADING ─────────────────────────────────────────────
+            if (_loading)
+              const Padding(
+                padding: EdgeInsets.all(40),
+                child: CircularProgressIndicator(),
+              )
+
+            // ── GENERAL SETTINGS ─────────────────────────────────────
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+
+                  // ── RFID ────────────────────────────────────────────
+                  _sectionLabel('RFID CONTROLLER'),
+                  const SizedBox(height: 12),
+
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+
+                      // Serial Port Dropdown
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              height: _labelHeight,
+                              child: Row(
+                                children: [
+                                  Text(
+                                    'Serial Port',
+                                    style: GoogleFonts.cinzel(
+                                      fontSize: 11,
+                                      color: AppColors.sandDark,
+                                      letterSpacing: 1,
                                     ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              // Dropdown — same height as TextFormField input area
-                              Container(
-                                height: _fieldHeight,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12),
-                                decoration: BoxDecoration(
-                                  color:
-                                      AppColors.deepBrown.withOpacity(0.6),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(
-                                      color: AppColors.orange
-                                          .withOpacity(0.3),
-                                      width: 1.5),
-                                ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<String>(
-                                    value: _availablePorts
-                                            .contains(_selectedPort)
-                                        ? _selectedPort
-                                        : null,
-                                    hint: Text(
-                                      _selectedPort.isNotEmpty
-                                          ? _selectedPort
-                                          : 'Select port',
-                                      style: GoogleFonts.cinzel(
-                                          fontSize: 13,
-                                          color: AppColors.sandLight),
-                                    ),
-                                    isExpanded: true,
-                                    dropdownColor: const Color(0xFF2A1A0A),
-                                    icon: Icon(Symbols.expand_more,
-                                        color: AppColors.orange, size: 18),
-                                    items: _availablePorts
-                                        .map((p) => DropdownMenuItem(
-                                              value: p,
-                                              child: Row(children: [
-                                                Icon(Symbols.usb,
-                                                    color: AppColors.orange
-                                                        .withOpacity(0.7),
-                                                    size: 16),
-                                                const SizedBox(width: 8),
-                                                Text(p,
-                                                    style: GoogleFonts.cinzel(
-                                                        fontSize: 13,
-                                                        color: AppColors
-                                                            .sandLight)),
-                                              ]),
-                                            ))
-                                        .toList(),
-                                    onChanged: (val) {
-                                      if (val != null) {
-                                        setState(
-                                            () => _selectedPort = val);
-                                      }
-                                    },
                                   ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        // Baud rate — standard TextFormField (has its own label)
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Spacer matches: label height (20) + SizedBox(8) = 28
-                              const SizedBox(height: 28),
-                              _field(
-                                controller: _baudRate,
-                                label: 'Baud Rate',
-                                hint: '115200',
-                                icon: Symbols.speed,
-                                numbersOnly: true,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    // Auto-detect
-                    Row(
-                      children: [
-                        GestureDetector(
-                          onTap: _detecting ? null : _detectPort,
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: AppColors.deepBrown,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: _detecting
-                                    ? AppColors.sandDark
-                                    : AppColors.blue.withOpacity(0.8),
-                                width: 1.5,
+                                  const Spacer(),
+                                  GestureDetector(
+                                    onTap: _refreshPorts,
+                                    child: Icon(
+                                      Symbols.refresh,
+                                      color: AppColors.orange.withOpacity(0.6),
+                                      size: 16,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                _detecting
-                                    ? SizedBox(
-                                        width: 14,
-                                        height: 14,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: AppColors.blue,
+                            const SizedBox(height: 8),
+
+                            Container(
+                              height: _fieldHeight,
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: AppColors.deepBrown.withOpacity(0.6),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: AppColors.orange.withOpacity(0.3),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: _availablePorts.contains(_selectedPort)
+                                      ? _selectedPort
+                                      : null,
+                                  hint: Text(
+                                    _selectedPort.isNotEmpty
+                                        ? _selectedPort
+                                        : 'Select port',
+                                    style: GoogleFonts.cinzel(
+                                      fontSize: 13,
+                                      color: AppColors.sandLight,
+                                    ),
+                                  ),
+                                  isExpanded: true,
+                                  dropdownColor: const Color(0xFF2A1A0A),
+                                  icon: Icon(
+                                    Symbols.expand_more,
+                                    color: AppColors.orange,
+                                    size: 18,
+                                  ),
+                                  items: _availablePorts
+                                      .map(
+                                        (p) => DropdownMenuItem(
+                                          value: p,
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Symbols.usb,
+                                                color: AppColors.orange.withOpacity(0.7),
+                                                size: 16,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                p,
+                                                style: GoogleFonts.cinzel(
+                                                  fontSize: 13,
+                                                  color: AppColors.sandLight,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       )
-                                    : Icon(Symbols.search,
-                                        color: AppColors.blue, size: 16),
-                                const SizedBox(width: 8),
-                                Text(
-                                  _detecting
-                                      ? 'DETECTING...'
-                                      : 'AUTO-DETECT PORT',
-                                  style: GoogleFonts.cinzel(
-                                    fontSize: 11,
-                                    letterSpacing: 2,
-                                    color: _detecting
-                                        ? AppColors.sandDark
-                                        : AppColors.blue,
-                                  ),
+                                      .toList(),
+                                  onChanged: (val) {
+                                    if (val != null) {
+                                      setState(() => _selectedPort = val);
+                                    }
+                                  },
                                 ),
-                              ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      // Baud Rate
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 28),
+                            _field(
+                              controller: _baudRate,
+                              label: 'Baud Rate',
+                              hint: '115200',
+                              icon: Symbols.speed,
+                              numbersOnly: true,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Auto Detect Button
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: _detecting ? null : _detectPort,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.deepBrown,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: _detecting
+                                  ? AppColors.sandDark
+                                  : AppColors.blue.withOpacity(0.8),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _detecting
+                                  ? SizedBox(
+                                      width: 14,
+                                      height: 14,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColors.blue,
+                                      ),
+                                    )
+                                  : Icon(
+                                      Symbols.search,
+                                      color: AppColors.blue,
+                                      size: 16,
+                                    ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _detecting ? 'DETECTING...' : 'AUTO-DETECT PORT',
+                                style: GoogleFonts.cinzel(
+                                  fontSize: 11,
+                                  letterSpacing: 2,
+                                  color: _detecting
+                                      ? AppColors.sandDark
+                                      : AppColors.blue,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+
+                      if (_detectStatus.isNotEmpty)
+                        Expanded(
+                          child: Text(
+                            _detectStatus,
+                            style: GoogleFonts.cinzel(
+                              fontSize: 10,
+                              color: _detectStatus.contains('Found')
+                                  ? AppColors.success
+                                  : _detectStatus.contains('Not detected')
+                                      ? AppColors.error
+                                      : AppColors.sandDark,
+                              letterSpacing: 1,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        if (_detectStatus.isNotEmpty)
-                          Expanded(
-                            child: Text(
-                              _detectStatus,
-                              style: GoogleFonts.cinzel(
-                                fontSize: 10,
-                                color: _detectStatus.contains('Found')
-                                    ? AppColors.success
-                                    : _detectStatus
-                                            .contains('Not detected')
-                                        ? AppColors.error
-                                        : AppColors.sandDark,
-                                letterSpacing: 1,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
+                    ],
+                  ),
 
-                    // ── LED ──────────────────────────────────────────────
-                    const SizedBox(height: 20),
-                    _sectionLabel('LED CONTROLLER'),
-                    const SizedBox(height: 12),
-                    Row(children: [
+                  // ── LED ──────────────────────────────────────────────
+                  const SizedBox(height: 20),
+                  _sectionLabel('LED CONTROLLER'),
+                  const SizedBox(height: 12),
+
+                  Row(
+                    children: [
                       Expanded(
                         flex: 3,
                         child: _field(
                           controller: _ledHost,
                           label: 'IP Address',
-                          hint: '192.168.0.111',
+                          hint: '192.168.100.111',
                           icon: Symbols.wifi,
                         ),
                       ),
@@ -781,13 +854,16 @@ class _SettingsFormState extends State<_SettingsForm> {
                           numbersOnly: true,
                         ),
                       ),
-                    ]),
+                    ],
+                  ),
 
-                    // ── Game ─────────────────────────────────────────────
-                    const SizedBox(height: 20),
-                    _sectionLabel('GAME'),
-                    const SizedBox(height: 12),
-                    Row(children: [
+                  // ── GAME ─────────────────────────────────────────────
+                  const SizedBox(height: 20),
+                  _sectionLabel('GAME'),
+                  const SizedBox(height: 12),
+
+                  Row(
+                    children: [
                       Expanded(
                         child: _field(
                           controller: _gameDuration,
@@ -807,77 +883,183 @@ class _SettingsFormState extends State<_SettingsForm> {
                           numbersOnly: true,
                         ),
                       ),
-                    ]),
+                    ],
+                  ),
 
-                    const SizedBox(height: 28),
+                  const SizedBox(height: 28),
 
-                    // ── Save ─────────────────────────────────────────────
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: GestureDetector(
-                        onTap: _save,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          decoration: BoxDecoration(
+                  // Save Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: GestureDetector(
+                      onTap: _save,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        decoration: BoxDecoration(
+                          color: _saved
+                              ? AppColors.success.withOpacity(0.2)
+                              : AppColors.deepBrown,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
                             color: _saved
-                                ? AppColors.success.withOpacity(0.2)
-                                : AppColors.deepBrown,
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
+                                ? AppColors.success
+                                : AppColors.orange,
+                            width: 1.5,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              _saved ? Symbols.check_circle : Symbols.save,
                               color: _saved
                                   ? AppColors.success
                                   : AppColors.orange,
-                              width: 1.5,
+                              size: 20,
                             ),
-                          ),
-                          alignment: Alignment.center,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                _saved
-                                    ? Symbols.check_circle
-                                    : Symbols.save,
+                            const SizedBox(width: 10),
+                            Text(
+                              _saved ? 'SAVED!' : 'SAVE SETTINGS',
+                              style: GoogleFonts.cinzel(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 3,
                                 color: _saved
                                     ? AppColors.success
                                     : AppColors.orange,
-                                size: 20,
                               ),
-                              const SizedBox(width: 10),
-                              Text(
-                                _saved ? 'SAVED!' : 'SAVE SETTINGS',
-                                style: GoogleFonts.cinzel(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 3,
-                                  color: _saved
-                                      ? AppColors.success
-                                      : AppColors.orange,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
+                  ),
 
-                    const SizedBox(height: 10),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Changes take effect on next app restart.',
+                    style: GoogleFonts.cinzel(
+                      fontSize: 10,
+                      color: AppColors.sandDark.withOpacity(0.6),
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+  Widget _buildSoundTab() {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionLabel("GENERAL SOUND"),
+          const SizedBox(height: 20),
+
+          // Volume slider
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.deepBrown.withOpacity(0.6),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: AppColors.orange.withOpacity(0.3),
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Symbols.volume_down, color: AppColors.sandLight, size: 18),
+                  Expanded(
+                    child: Slider(
+                      value: _generalVolume,
+                      min: 0,
+                      max: 1,
+                      divisions: 10,
+                      activeColor: AppColors.orange,
+                      inactiveColor: AppColors.sandDark.withOpacity(0.4),
+                      onChanged: (v) async {
+                        setState(() => _generalVolume = v);
+
+                        // Play test sound
+                        await _playTestSound(v);
+                      },
+                    ),
+                  ),
+                  Icon(Symbols.volume_up, color: AppColors.sandLight, size: 18),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Apply button
+            GestureDetector(
+              onTap: _applySoundSettings,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.deepBrown,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: AppColors.orange.withOpacity(0.8),
+                    width: 1.5,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Symbols.check, color: AppColors.orange, size: 18),
+                    const SizedBox(width: 8),
                     Text(
-                      'Changes take effect on next app restart.',
+                      "APPLY",
                       style: GoogleFonts.cinzel(
-                        fontSize: 10,
-                        color: AppColors.sandDark.withOpacity(0.6),
-                        letterSpacing: 1,
+                        fontSize: 12,
+                        letterSpacing: 2,
+                        color: AppColors.orange,
                       ),
                     ),
                   ],
                 ),
               ),
             ),
+
+            if (_soundApplied) ...[
+              const SizedBox(height: 10),
+              Text(
+                "Sound settings applied!",
+                style: GoogleFonts.cinzel(
+                  fontSize: 11,
+                  color: AppColors.success,
+                  letterSpacing: 1,
+                ),
+              ),
+            ],
         ],
       ),
     );
+  }
+
+  Future<void> _applySoundSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('generalVolume', _generalVolume);
+
+    audioPlayer.setSfxVolume(_generalVolume);
+    audioPlayer.setMusicVolume(_generalVolume);
+
+    setState(() => _soundApplied = true);
+  }
+
+  Future<void> _playTestSound(double volume) async {
+    audioPlayer.playTestSound(volume);
   }
 
   Widget _sectionLabel(String text) => Row(

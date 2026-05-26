@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/game_config.dart';
 import '../models/shell_model.dart';
 import 'rfid_service.dart';
@@ -26,6 +27,11 @@ class GameController extends ChangeNotifier {
   // ── Init ────────────────────────────────────────────────────────────────
 
   Future<void> init() async {
+    final prefs = await SharedPreferences.getInstance();
+    final volume = prefs.getDouble('generalVolume') ?? 1.0;
+
+    _audio.setSfxVolume(volume);
+    _audio.setMusicVolume(volume);
     await _led.init();
     await _rfid.connect();
     _rfidSub = _rfid.events.listen(_onTagEvent);

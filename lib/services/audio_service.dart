@@ -3,8 +3,14 @@
 import 'package:audioplayers/audioplayers.dart';
 
 class AudioService {
+  static final AudioService _instance = AudioService._internal();
+  factory AudioService() => _instance;
+  AudioService._internal();
+
   final AudioPlayer _sfx        = AudioPlayer(); 
   final AudioPlayer _soundtrack = AudioPlayer(); 
+
+  double _currentVolume = 1.0;
 
   Future<void> playCorrect() async {
     await _sfx.stop();
@@ -52,4 +58,23 @@ class AudioService {
     _sfx.dispose();
     _soundtrack.dispose();
   }
+
+  // ── SoundSettings ────────────────────────────────────────────────────────
+
+  Future<void> setSfxVolume(double volume) async {
+    _currentVolume = volume;
+    await _sfx.setVolume(volume);
+  }
+
+  Future<void> setMusicVolume(double volume) async {
+    await _soundtrack.setVolume(volume);
+  }
+
+  Future<void> playTestSound(double volume) async {
+    await _sfx.setVolume(volume);
+    await _sfx.stop();
+    await _sfx.play(AssetSource('sounds/splash.mp3'));
+  }
+
+  double get volume => _currentVolume;
 }
