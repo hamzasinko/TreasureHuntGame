@@ -399,73 +399,72 @@ class _SettingsFormState extends State<_SettingsForm> {
       return;
     }
 
-    for (final portName in _availablePorts) {
-      setState(() => _detectStatus = 'Trying $portName...');
+    
+    setState(() => _detectStatus = 'Trying $_selectedPort...');
 
-      try {
-        final port = SerialPort(portName);
-        if (!port.openReadWrite()) {
-          port.dispose();
-          continue;
-        }
-
-        final config = SerialPortConfig()
-          ..baudRate = int.tryParse(_baudRate.text.trim()) ?? 115200
-          ..bits = 8
-          ..stopBits = 1
-          ..parity = SerialPortParity.none
-          ..setFlowControl(SerialPortFlowControl.none);
-        port.config = config;
-
-        final reader = SerialPortReader(port);
-        bool found = false;
-
-        final sub = reader.stream.listen((data) {
-          final msg = String.fromCharCodes(data);
-
-          // XN185 tag events
-          if (msg.contains('[TD=') || msg.contains('[TR=')) {
-            found = true;
-          }
-        });
-
-        // Tell user to scan a tag
-        setState(() => _detectStatus = 'Port $portName opened — scan a tag...');
-
-        // Send init commands BEFORE waiting
-        port.write(Uint8List.fromList('X002S[10:3]\r\n'.codeUnits));
-        await Future.delayed(const Duration(milliseconds: 200));
-
-        port.write(Uint8List.fromList('X007S[10:3]\r\n'.codeUnits));
-        await Future.delayed(const Duration(milliseconds: 200));
-
-        // Wait up to 5 seconds for a scan
-        const timeout = Duration(seconds: 5);
-        final start = DateTime.now();
-
-        while (!found && DateTime.now().difference(start) < timeout) {
-          await Future.delayed(const Duration(milliseconds: 100));
-        } 
-
-        await sub.cancel();
-        reader.close();
-        port.close();
+    try {
+      final port = SerialPort(_selectedPort);
+      if (!port.openReadWrite()) {
         port.dispose();
-
-        if (found) {
-          setState(() {
-            _selectedPort = portName;
-            _detecting = false;
-            _detectStatus = 'XN-185 detected on $portName!';
-          });
-          return;
-        } else {
-          setState(() => _detectStatus = 'No tag detected on $portName...');
-        }
-
-      } catch (e) {
-        debugPrint('[Settings] Error on $portName: $e');
+        return;
       }
+
+      final config = SerialPortConfig()
+        ..baudRate = int.tryParse(_baudRate.text.trim()) ?? 115200
+        ..bits = 8
+        ..stopBits = 1
+        ..parity = SerialPortParity.none
+        ..setFlowControl(SerialPortFlowControl.none);
+      port.config = config;
+
+      final reader = SerialPortReader(port);
+      bool found = false;
+
+      final sub = reader.stream.listen((data) {
+        final msg = String.fromCharCodes(data);
+
+        // XN185 tag events
+        if (msg.contains('[TD=') || msg.contains('[TR=')) {
+          found = true;
+        }
+      });
+
+      // Tell user to scan a tag
+      setState(() => _detectStatus = 'Port $_selectedPort opened — scan a tag...');
+
+      // Send init commands BEFORE waiting
+      port.write(Uint8List.fromList('X002S[10:3]\r\n'.codeUnits));
+      await Future.delayed(const Duration(milliseconds: 200));
+
+      port.write(Uint8List.fromList('X007S[10:3]\r\n'.codeUnits));
+      await Future.delayed(const Duration(milliseconds: 200));
+
+      // Wait up to 5 seconds for a scan
+      const timeout = Duration(seconds: 5);
+      final start = DateTime.now();
+
+      while (!found && DateTime.now().difference(start) < timeout) {
+        await Future.delayed(const Duration(milliseconds: 100));
+      } 
+
+      await sub.cancel();
+      reader.close();
+      port.close();
+      port.dispose();
+
+      if (found) {
+        setState(() {
+          _selectedPort = _selectedPort;
+          _detecting = false;
+          _detectStatus = 'XN-185 detected on $_selectedPort';
+        });
+        return;
+      } else {
+        setState(() => _detectStatus = 'No tag detected on $_selectedPort...');
+      }
+
+    } catch (e) {
+      debugPrint('[Settings] Error on $_selectedPort: $e');
     }
 
     setState(() {
