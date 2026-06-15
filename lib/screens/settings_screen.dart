@@ -387,15 +387,7 @@ class _SettingsFormState extends State<_SettingsForm> {
       _detectStatus = 'Scanning ports...';
     });
 
-    final sysPorts = List<String>.from(SerialPort.availablePorts);
-
-    if (_selectedPort.isNotEmpty &&  sysPorts.contains(_selectedPort)) {
-      setState(() {
-        _detecting = false;
-        _detectStatus = 'Port $_selectedPort already selected and valid.';
-      });
-      return;
-    }
+    //final sysPorts = List<String>.from(SerialPort.availablePorts);
 
     _refreshPorts();
 
