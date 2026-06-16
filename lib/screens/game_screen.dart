@@ -258,7 +258,7 @@ class _Footer extends StatelessWidget {
             onPressed: gc.returnToMenu,
             icon: Icon(Symbols.logout, size: 16, color: AppColors.sandDark),
             label: Text(
-              'QUIT',
+              'QUIT TEST',
               style: GoogleFonts.cinzel(
                 letterSpacing: 2,
                 fontSize: 24,

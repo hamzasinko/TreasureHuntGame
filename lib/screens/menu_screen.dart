@@ -141,6 +141,27 @@ class _MenuScreenState extends State<MenuScreen>
                         label: 'START GAME',
                         color: AppColors.green,
                         onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (_) => AlertDialog(
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children:[
+                                  _GlowButton(label: "4 Shells",
+                                    color: AppColors.green,
+                                    onTap:(){ debugPrint("4 Shells mode not implemented yet");}),
+                                  
+                                  const SizedBox(height: 12),
+                                  
+                                  _GlowButton(label: "8 Shells",
+                                  color: AppColors.blue,
+                                  onTap:(){ debugPrint("8 Shells mode not implemented yet");}),
+                                ]
+                              )
+  
+                            )
+                          );
+                          //_GlowButton(label: "Test", color: AppColors.green,onTap:(){});
                           _screenFade.forward().then((_) => gc.startCountdown());
                         },
                       ),
