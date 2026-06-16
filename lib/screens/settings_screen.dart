@@ -387,8 +387,6 @@ class _SettingsFormState extends State<_SettingsForm> {
       _detectStatus = 'Scanning ports...';
     });
 
-    //final sysPorts = List<String>.from(SerialPort.availablePorts);
-
     _refreshPorts();
 
     if (_availablePorts.isEmpty) {
@@ -399,15 +397,59 @@ class _SettingsFormState extends State<_SettingsForm> {
       return;
     }
 
+    if(!_availablePorts.contains(_selectedPort)){
+      setState(() {
+        _detecting = false;
+        _detectStatus = 'Port $_selectedPort already is in use by the app. but not found.';
+      });
+      return;
+    }
     
+    final prefs = await SharedPreferences.getInstance();
+    final savedPort = prefs.getString('serialPort');
+
+
+
+    if (savedPort == _selectedPort) {
+      setState(() {
+        _detecting = false;
+        _detectStatus = 'Port $_selectedPort may already be in use. Try selecting manually.';
+      });
+      return;
+    }
+
     setState(() => _detectStatus = 'Trying $_selectedPort...');
 
     try {
       final port = SerialPort(_selectedPort);
-      if (!port.openReadWrite()) {
-        port.dispose();
+
+      if (port.isOpen) {
+        setState(() {
+          _detecting = false;
+          _detectStatus = 'Port $_selectedPort is already in use by the app.';
+        });
         return;
       }
+
+      if (!port.openReadWrite()) {
+        port.dispose();
+        setState(() {
+          _detecting = false;
+          _detectStatus = 'Could not open $_selectedPort.';
+        });
+        return;
+      }
+
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      port.flush();
+
+      try {
+        while (port.bytesAvailable > 0) {
+          port.read(port.bytesAvailable);
+          await Future.delayed(const Duration(milliseconds: 50));
+        }
+      } catch (_) {}
 
       final config = SerialPortConfig()
         ..baudRate = int.tryParse(_baudRate.text.trim()) ?? 115200
@@ -419,19 +461,28 @@ class _SettingsFormState extends State<_SettingsForm> {
 
       final reader = SerialPortReader(port);
       bool found = false;
+      final StringBuffer buffer = StringBuffer();
 
       final sub = reader.stream.listen((data) {
         final msg = String.fromCharCodes(data);
 
+        buffer.write(msg);
+        final accumulated = buffer.toString();
+
+       // uncomment for debug
+       //debugPrint('[XN185 MSG] "$accumulated"');
+
         // XN185 tag events
-        if (msg.contains('[TD=') || msg.contains('[TR=')) {
+        if (accumulated.contains('[TD=') || accumulated.contains('[TR=')) {
           found = true;
         }
       });
 
+      buffer.clear();
       // Tell user to scan a tag
       setState(() => _detectStatus = 'Port $_selectedPort opened — scan a tag...');
 
+      port.write(Uint8List.fromList('\r\n'.codeUnits));
       // Send init commands BEFORE waiting
       port.write(Uint8List.fromList('X002S[10:3]\r\n'.codeUnits));
       await Future.delayed(const Duration(milliseconds: 200));
@@ -460,11 +511,17 @@ class _SettingsFormState extends State<_SettingsForm> {
         });
         return;
       } else {
+        _detecting = false;
         setState(() => _detectStatus = 'No tag detected on $_selectedPort...');
       }
 
     } catch (e) {
       debugPrint('[Settings] Error on $_selectedPort: $e');
+      setState(() {
+        _detecting = false;
+        _detectStatus = 'Error on $_selectedPort: ${e.toString()}';
+      });
+      return;
     }
 
     setState(() {
