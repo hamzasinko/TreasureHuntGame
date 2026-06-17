@@ -8,8 +8,9 @@ import '../models/shell_model.dart';
 import '../services/game_controller.dart';
 import '../widgets/shell_card.dart';
 
-class GameScreen extends StatelessWidget {
-  const GameScreen({super.key});
+
+class ModOne_Screen extends StatelessWidget {
+  const ModOne_Screen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -29,9 +30,9 @@ class GameScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     _Header(gc: gc),
-                    const SizedBox(height: 8),
-                    Expanded(child: _AntennaRow(shells: gc.shells)),
-                    const SizedBox(height: 8),
+
+                    Flexible(child: _AntennaRow(shells: gc.shells)),
+
                     _Footer(gc: gc),
                     const SizedBox(height: 8),
                   ],
@@ -55,10 +56,8 @@ class _Header extends StatelessWidget {
       '${(s ~/ 60).toString().padLeft(2, '0')}:${(s % 60).toString().padLeft(2, '0')}';
 
   @override
-  
   Widget build(BuildContext context) {
     final found = gc.shells.where((s) => s.isFound).length;
-  
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       decoration: BoxDecoration(
@@ -99,6 +98,7 @@ class _Header extends StatelessWidget {
   }
 }
 
+
 class _StatBox extends StatelessWidget {
   final IconData icon;
   final String label, value;
@@ -136,36 +136,18 @@ class _StatBox extends StatelessWidget {
     );
   }
 }
-
 // ── Antenna row — side by side ─────────────────────────────────────────────
 
 class _AntennaRow extends StatelessWidget {
   final List<ShellModel> shells;
   const _AntennaRow({required this.shells});
-
+  
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Row(
-        children: [
-          Expanded(
-            child: _AntennaPanel(
-              label: 'A',
-              subtitle: 'Shells 1 – 4',
-              shells: shells.sublist(0, 4),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _AntennaPanel(
-              label: 'B',
-              subtitle: 'Shells 5 – 8',
-              shells: shells.sublist(4, 8),
-            ),
-          ),
-        ],
-      ),
+    return _AntennaPanel(
+      label: 'A',
+      subtitle: 'Shells 1 – 4',
+      shells: shells.sublist(0, 4),
     );
   }
 }
@@ -181,69 +163,59 @@ class _AntennaPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.deepBrown.withOpacity(0.6),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.orange.withOpacity(0.4),
-          width: 1.5,
-        ),
-      ),
-      padding: const EdgeInsets.all(10),
-      child: Column(
-        children: [
-          // ── CENTERED HEADER ───────────────────────────────
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                label,
-                style: GoogleFonts.cinzel(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 3,
-                  color: AppColors.orange,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              Text(
-                subtitle,
-                style: GoogleFonts.cinzel(
-                  fontSize: 24,
-                  letterSpacing: 2,
-                  color: AppColors.sandDark,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.deepBrown.withOpacity(0.6),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.orange.withOpacity(0.4),
+            width: 1.5,
           ),
-
-          const SizedBox(height: 4),
-          Divider(color: AppColors.orange.withOpacity(0.25), height: 1),
-          const SizedBox(height: 4),
-
-          // 2×2 grid
-          Expanded(
-            child: Center(
+        ),
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: [
+            // ── CENTERED HEADER ───────────────────────────────
+            Text(
+              label,
+              style: GoogleFonts.cinzel(
+                fontSize: 32,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 3,
+                color: AppColors.orange,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            Text(
+              subtitle,
+              style: GoogleFonts.cinzel(
+                fontSize: 14,
+                letterSpacing: 1,
+                color: AppColors.sandDark,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Divider(color: AppColors.orange.withOpacity(0.25), height: 1),
+            const SizedBox(height: 12),
+            // 2×2 grid
+            Flexible(
               child: GridView.count(
                 crossAxisCount: 2,
                 crossAxisSpacing: 8,
                 mainAxisSpacing: 8,
-                childAspectRatio: 1.25,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
+                childAspectRatio: 2.7,
                 children: shells.map((s) => ShellCard(shell: s)).toList(),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
-
-// ── Footer ─────────────────────────────────────────────────────────────────
 
 class _Footer extends StatelessWidget {
   final GameController gc;
@@ -260,7 +232,7 @@ class _Footer extends StatelessWidget {
             onPressed: gc.returnToMenu,
             icon: Icon(Symbols.logout, size: 16, color: AppColors.sandDark),
             label: Text(
-              'QUIT TEST',
+              'testest TEST',
               style: GoogleFonts.cinzel(
                 letterSpacing: 2,
                 fontSize: 24,

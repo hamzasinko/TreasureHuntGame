@@ -9,6 +9,7 @@ import 'package:window_manager/window_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'settings_screen.dart';
+import 'game_4_shells_screen.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -149,7 +150,15 @@ class _MenuScreenState extends State<MenuScreen>
                                 children:[
                                   _GlowButton(label: "4 Shells",
                                     color: AppColors.green,
-                                    onTap:(){ debugPrint("4 Shells mode not implemented yet");}),
+                                    onTap:(){ 
+                                      debugPrint("4 Shells mode not implemented yet");
+                                      //_screenFade.forward().then((_) => gc.startCountdown());
+                                      Navigator.pop(context);
+                                      Navigator.push(context, MaterialPageRoute(
+                                        builder: (_) => const  ModOne_Screen(),
+                                       ),
+                                      );
+                                      }),
                                   
                                   const SizedBox(height: 12),
                                   
@@ -162,7 +171,7 @@ class _MenuScreenState extends State<MenuScreen>
                             )
                           );
                           //_GlowButton(label: "Test", color: AppColors.green,onTap:(){});
-                          _screenFade.forward().then((_) => gc.startCountdown());
+                          //_screenFade.forward().then((_) => gc.startCountdown());
                         },
                       ),
                     ),

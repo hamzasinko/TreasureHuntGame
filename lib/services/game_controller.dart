@@ -45,6 +45,10 @@ class GameController extends ChangeNotifier {
     );
     score = 0;
   }
+  // ---- Function to go to 4 shells
+  void fourShells() {
+    // Implementation for 4 shells mode
+  }
 
   // ── Countdown ───────────────────────────────────────────────────────────
 
