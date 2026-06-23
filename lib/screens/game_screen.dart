@@ -148,18 +148,26 @@ class _AntennaRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: _AntennaPanel(
-              label: 'A',
-              subtitle: 'Shells 1 – 4',
-              shells: shells.sublist(0, 4),
+            child: Consumer<GameController>(
+              builder: (ctx, gc, child) => _AntennaPanel(
+                label: gc.gameMode == GameMode.twoGroups ? 'GROUP A' : 'ANTENNA A',
+                subtitle: 
+                     'Shells 1 – 4',
+                shells: gc.shells.sublist(0, 4),
+                celebrating: gc.gameMode == GameMode.twoGroups && gc.group1Finished,
+              ),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: _AntennaPanel(
-              label: 'B',
-              subtitle: 'Shells 5 – 8',
-              shells: shells.sublist(4, 8),
+            child: Consumer<GameController>(
+              builder: (ctx, gc, child) => _AntennaPanel(
+                label: gc.gameMode == GameMode.twoGroups ? 'GROUP B' : 'ANTENNA B',
+                subtitle: 
+                     'Shells 5 – 8',
+                shells: gc.shells.sublist(4, 8),
+                celebrating: gc.gameMode == GameMode.twoGroups && gc.group2Finished,
+              ),
             ),
           ),
         ],
@@ -171,57 +179,77 @@ class _AntennaRow extends StatelessWidget {
 class _AntennaPanel extends StatelessWidget {
   final String label, subtitle;
   final List<ShellModel> shells;
+  final bool celebrating;
   const _AntennaPanel({
     required this.label,
     required this.subtitle,
     required this.shells,
+    this.celebrating = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Stack(
+  children: [
+    Container(
       decoration: BoxDecoration(
-        color: AppColors.deepBrown.withOpacity(0.6),
+        color: celebrating
+            ? AppColors.success.withOpacity(0.15)
+            : AppColors.deepBrown.withOpacity(0.6),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.orange.withOpacity(0.4),
-          width: 1.5,
+          color: celebrating
+              ? AppColors.success
+              : AppColors.orange.withOpacity(0.4),
+          width: celebrating ? 2.5 : 1.5,
         ),
       ),
       padding: const EdgeInsets.all(10),
       child: Column(
         children: [
-          // ── CENTERED HEADER ───────────────────────────────
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+          Row(
             children: [
-              Text(
-                label,
-                style: GoogleFonts.cinzel(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 3,
-                  color: AppColors.orange,
+              Container(
+                width: 4, height: 24,
+                decoration: BoxDecoration(
+                  color: celebrating ? AppColors.success : AppColors.orange,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                textAlign: TextAlign.center,
               ),
-              Text(
-                subtitle,
-                style: GoogleFonts.cinzel(
-                  fontSize: 24,
-                  letterSpacing: 2,
-                  color: AppColors.sandDark,
-                ),
-                textAlign: TextAlign.center,
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label,
+                      style: GoogleFonts.cinzel(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 3,
+                          color: celebrating
+                              ? AppColors.success
+                              : AppColors.orange)),
+                  Text(subtitle,
+                      style: GoogleFonts.cinzel(
+                          fontSize: 12,
+                          letterSpacing: 2,
+                          color: AppColors.sandDark)),
+                ],
               ),
+              const Spacer(),
+              celebrating
+                  ? Icon(Symbols.emoji_events,
+                      color: AppColors.success, size: 22)
+                  : Icon(Symbols.sensors,
+                      color: AppColors.orange.withOpacity(0.6), size: 18),
             ],
           ),
-
           const SizedBox(height: 4),
-          Divider(color: AppColors.orange.withOpacity(0.25), height: 1),
+          Divider(
+              color: celebrating
+                  ? AppColors.success.withOpacity(0.4)
+                  : AppColors.orange.withOpacity(0.25),
+              height: 1),
           const SizedBox(height: 4),
-
-          // 2×2 grid
           Expanded(
             child: Center(
               child: GridView.count(
@@ -237,7 +265,35 @@ class _AntennaPanel extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),
+    // Celebration banner
+    if (celebrating)
+      Positioned(
+        top: 0,
+        left: 0,
+        right: 0,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 18),
+          decoration: BoxDecoration(
+            color: AppColors.success.withOpacity(0.3),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+            ),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            '🏆  ALL SHELLS FOUND!  🏆',
+            style: GoogleFonts.pirataOne(
+              fontSize: 14,
+              color: Colors.white,
+              letterSpacing: 2,
+            ),
+          ),
+        ),
+      ),
+  ],
+);
   }
 }
 

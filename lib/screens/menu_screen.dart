@@ -9,6 +9,7 @@ import 'package:window_manager/window_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'settings_screen.dart';
+import 'mode_select_screen.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -138,11 +139,9 @@ class _MenuScreenState extends State<MenuScreen>
                     // START button — fades image out first
                     Consumer<GameController>(
                       builder: (ctx, gc, child) => _GlowButton(
-                        label: 'START GAME',
+                        label: 'SELECT MODE',
                         color: AppColors.green,
-                        onTap: () {
-                          _screenFade.forward().then((_) => gc.startCountdown());
-                        },
+                        onTap: gc.goToModeSelect,
                       ),
                     ),
                     const SizedBox(height: 12),
