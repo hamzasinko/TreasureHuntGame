@@ -5,6 +5,9 @@ import '../models/game_config.dart';
 
 class LedService {
   RawDatagramSocket? _socket;
+  GameMode _mode = GameMode.single;
+
+  void setMode(GameMode mode) => _mode = mode;
 
   Future<void> init() async {
     _socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
@@ -24,8 +27,8 @@ class LedService {
   // ── Shell feedback ──────────────────────────────────────────────────────
 
   void shellCorrect(int shell) {
-    final from = _pad(GameConfig.ledStartForShell(shell));
-    final to   = _pad(GameConfig.ledEndForShell(shell));
+    final from = _pad(GameConfig.ledStartForShell(shell, _mode));
+    final to   = _pad(GameConfig.ledEndForShell(shell, _mode));
     _send('setStrobeRGBW 000 255 000 000');
     _send('strobe 03 080 080');
     Future.delayed(const Duration(milliseconds: 100), () {
@@ -34,8 +37,8 @@ class LedService {
   }
 
   void shellWrong(int shell) {
-    final from = _pad(GameConfig.ledStartForShell(shell));
-    final to   = _pad(GameConfig.ledEndForShell(shell));
+    final from = _pad(GameConfig.ledStartForShell(shell, _mode));
+    final to   = _pad(GameConfig.ledEndForShell(shell, _mode));
     _send('setStrobeRGBW 255 000 000 000');
     _send('strobe 03 080 080');
     Future.delayed(const Duration(milliseconds: 100), () {
@@ -44,8 +47,8 @@ class LedService {
   }
 
   void shellOff(int shell) {
-    final from = _pad(GameConfig.ledStartForShell(shell));
-    final to   = _pad(GameConfig.ledEndForShell(shell));
+    final from = _pad(GameConfig.ledStartForShell(shell, _mode));
+    final to   = _pad(GameConfig.ledEndForShell(shell, _mode));
     _send('setBG 000 000 000 000 $from $to');
   }
 
@@ -95,6 +98,26 @@ class LedService {
   }
 
   // ── Victory ─────────────────────────────────────────────────────────────
+  void groupCelebration(int group) {
+    if (_mode != GameMode.twoGroups) return;
+    if (group == 1) {
+      // Group A: LEDs 58-81
+      final from = _pad(GameConfig.groupALedStart);
+      final to   = _pad(GameConfig.groupALedEnd);
+      _send('setBG 000 000 000 000 $from $to');
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _send('discoG 08 0050 0100');
+      });
+    } else {
+      // Group B: LEDs 0-57
+      final from = _pad(GameConfig.groupBLedStart);
+      final to   = _pad(GameConfig.groupBLedEnd);
+      _send('setBG 000 000 000 000 $from $to');
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _send('discoG 08 0050 0100');
+      });
+    }
+  }
 
   void victoryEffect() {
     _send('allOff');

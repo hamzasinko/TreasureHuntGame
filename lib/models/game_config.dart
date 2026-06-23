@@ -2,6 +2,8 @@
 import '../config/env.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+enum GameMode { single, twoGroups}
+
 class GameConfig {
   // USB serial connection to XN-185
   // Windows: 'COM3', 'COM4', etc.  Linux/Mac: '/dev/ttyUSB0', '/dev/tty.usbserial-...'
@@ -31,6 +33,20 @@ class GameConfig {
   // Total shells in game
   static const int totalShells = 8;
 
+  // ── LED ranges ────────────────────────────────────────────────────────
+
+  // Single mode: all LEDs 34–81
+  static const int singleLedStart = 34;
+  static const int singleLedEnd   = 81;
+
+  // Two-group mode:
+  // Group A (shells 1-4) → LEDs 58–81 (24 LEDs, 6 per shell)
+  // Group B (shells 5-8) → LEDs 0–57  (58 LEDs, ~14 per shell)
+  static const int groupALedStart = 58;
+  static const int groupALedEnd   = 81;
+  static const int groupBLedStart = 0;
+  static const int groupBLedEnd   = 57;
+
   // Map label index (LB1..LB8) → shell number 1-8.
   // Reader 1 (X002): LB1=shell1 … LB4=shell4
   // Reader 2 (X007): LB1=shell5 … LB4=shell8
@@ -42,8 +58,33 @@ class GameConfig {
 
   // LED lane positions per shell (0-based LED index start, length 10 each lane)
   // Adjust to match your physical setup
-  static int ledStartForShell(int shell) => (shell - 1) * 10;
-  static int ledEndForShell(int shell)   => ledStartForShell(shell) + 9;
+  static int ledStartForShell(int shell, GameMode mode) {
+    if (mode == GameMode.single) {
+      // 4 shells per antenna, 12 LEDs each within 34-81
+      final offset = (shell - 1) * 12;
+      return singleLedStart + offset;
+    } else {
+      if (shell <= 4) {
+        // Group A: 58-81, 6 LEDs per shell
+        return groupALedStart + (shell - 1) * 6;
+      } else {
+        // Group B: 0-57, 14 LEDs per shell (shells 5-8 → index 0-3)
+        return groupBLedStart + (shell - 5) * 14;
+      }
+    }
+  }
+
+  static int ledEndForShell(int shell, GameMode mode) {
+    if (mode == GameMode.single) {
+      return ledStartForShell(shell, mode) + 11;
+    } else {
+      if (shell <= 4) {
+        return ledStartForShell(shell, mode) + 5;
+      } else {
+        return ledStartForShell(shell, mode) + 13;
+      }
+    }
+  }
 
   static Future<void> loadFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();

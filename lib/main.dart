@@ -1,6 +1,7 @@
 // lib/main.dart
 
 import 'package:app_treasuregame/config/app_colors.dart';
+import 'package:app_treasuregame/screens/mode_select_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -101,6 +102,7 @@ class _RootNavigator extends StatelessWidget {
   Widget _screenFor(GamePhase phase) {
     switch (phase) {
       case GamePhase.menu:      return const MenuScreen(key: ValueKey('menu'));
+      case GamePhase.modeSelect: return const ModeSelectScreen(key: ValueKey('mode'));
       case GamePhase.countdown: return const CountdownScreen(key: ValueKey('countdown'));
       case GamePhase.playing:   return const GameScreen(key: ValueKey('game'));
       case GamePhase.victory:   return const VictoryScreen(key: ValueKey('victory'));

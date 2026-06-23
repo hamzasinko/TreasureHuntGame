@@ -7,172 +7,224 @@ import 'rfid_service.dart';
 import 'led_service.dart';
 import 'audio_service.dart';
 
-enum GamePhase { menu, countdown, playing, victory }
+enum GamePhase { menu , modeSelect, countdown, playing, victory }
 
 class GameController extends ChangeNotifier {
-  final RfidService  _rfid  = RfidService();
-  final LedService   _led   = LedService();
-  final AudioService _audio = AudioService();
-
-  GamePhase phase           = GamePhase.menu;
-  int countdown             = GameConfig.countdownSeconds;
-  int secondsRemaining      = GameConfig.gameDurationSeconds;
-  int score                 = 0;
-
-  late List<ShellModel> shells;
-  StreamSubscription<TagEvent>? _rfidSub;
-  Timer? _countdownTimer;
-  Timer? _gameTimer;
-
-  // ── Init ────────────────────────────────────────────────────────────────
-
-  Future<void> init() async {
-    final prefs = await SharedPreferences.getInstance();
-    final volume = prefs.getDouble('generalVolume') ?? 1.0;
-
-    _audio.setSfxVolume(volume);
-    _audio.setMusicVolume(volume);
-    await _led.init();
-    await _rfid.connect();
-    _rfidSub = _rfid.events.listen(_onTagEvent);
-    _resetShells();
-  }
-
-  void _resetShells() {
-    shells = List.generate(
-      GameConfig.totalShells,
-      (i) => ShellModel(number: i + 1),
-    );
-    score = 0;
-  }
-
-  // ── Countdown ───────────────────────────────────────────────────────────
-
-  Future<void> startCountdown() async {
-    // Clear any running LED effects before starting
-    _led.stopAll();
-    await Future.delayed(const Duration(milliseconds: 200));
-
-    phase     = GamePhase.countdown;
-    countdown = GameConfig.countdownSeconds;
-    _resetShells();
-    notifyListeners();
-
-    // Small delay so screen renders before audio starts
-    await Future.delayed(const Duration(milliseconds: 100));
-    _audio.playCountdown();
-
-    // Fire first pulse immediately for the first number
-    _led.countdownPulse(countdown);
-
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (t) {
-      countdown--;
-
-      if (countdown > 0) {
+    final RfidService  _rfid  = RfidService();
+    final LedService   _led   = LedService();
+    final AudioService _audio = AudioService();
+    
+    GamePhase phase           = GamePhase.menu;
+    GameMode  gameMode        = GameMode.single;
+    int countdown             = GameConfig.countdownSeconds;
+    int secondsRemaining      = GameConfig.gameDurationSeconds;
+    int score                 = 0;
+    
+    late List<ShellModel> shells;
+    StreamSubscription<TagEvent>? _rfidSub;
+    Timer? _countdownTimer;
+    Timer? _gameTimer;
+    
+    // Two-group state
+    bool group1Finished       = false;
+    bool group2Finished       = false;
+    
+    // ── Init ────────────────────────────────────────────────────────────────
+    
+    Future<void> init() async {
+        final prefs  = await SharedPreferences.getInstance();
+        final volume = prefs.getDouble('generalVolume') ?? 1.0;
+        
+        _audio.setSfxVolume(volume);
+        _audio.setMusicVolume(volume);
+        await _led.init();
+        await _rfid.connect();
+        _rfidSub     = _rfid.events.listen(_onTagEvent);
+        _resetShells();
+    }
+    
+    void _resetShells() {
+        shells = List.generate(
+            GameConfig.totalShells           ,
+            (i) => ShellModel(number: i + 1) ,
+        );
+        score          = 0;
+        group1Finished = false;
+        group2Finished = false;
+        score          = 0;
+    }
+    
+    void goToModeSelect() {
+        phase = GamePhase.modeSelect;
+        notifyListeners();
+    }
+    
+    void selectMode(GameMode mode) {
+        gameMode = mode;
+        _led.setMode(mode);
+        startCountdown();
+    }
+    
+    
+    // ── Countdown ───────────────────────────────────────────────────────────
+    
+    Future<void> startCountdown() async {
+        // Clear any running LED effects before starting
+        _led.stopAll();
+        await Future.delayed(const Duration(milliseconds       : 200));
+        
+        phase           = GamePhase.countdown;
+        countdown       = GameConfig.countdownSeconds;
+        _resetShells();
+        notifyListeners();
+        
+        // Small delay so screen renders before audio starts
+        await Future.delayed(const Duration(milliseconds       : 100));
+        _audio.playCountdown();
+        
+        // Fire first pulse immediately for the first number
         _led.countdownPulse(countdown);
-      } else {
-        t.cancel();
-        _led.countdownGo();
-        notifyListeners(); // show GO
-        // Wait for GO animation to fully complete before starting game
-        Future.delayed(const Duration(milliseconds: 1500), _startGame);
-        return;
-      }
-
-      notifyListeners();
+        
+        _countdownTimer = Timer.periodic(const Duration(seconds: 1) , (t) {
+            countdown--;
+            
+            if (countdown > 0) {
+                _led.countdownPulse(countdown);
+            } else {
+            t.cancel();
+            _led.countdownGo();
+            notifyListeners(); // show GO
+            // Wait for GO animation to fully complete before starting game
+            Future.delayed(const Duration(milliseconds: 1500) , _startGame);
+            return;
+        }
+        
+        notifyListeners();
     });
-  }
+}
 
-  // ── Game start ──────────────────────────────────────────────────────────
+// ── Game start ──────────────────────────────────────────────────────────
 
-  void _startGame() {
+void _startGame() {
     // Re-send init commands in case reader drifted out of label mode
     _rfid.reinit();
-
+    
     phase            = GamePhase.playing;
     secondsRemaining = GameConfig.gameDurationSeconds;
     _led.gameStartEffect();
     _audio.playGameStart();
     _audio.startGameSoundtrack();
     notifyListeners();
-
+    
     if (GameConfig.gameDurationSeconds > 0) {
-      _gameTimer = Timer.periodic(const Duration(seconds: 1), (t) {
-        secondsRemaining--;
-        notifyListeners();
-        if (secondsRemaining <= 0) {
-          t.cancel();
-          _endGame();
-        }
-      });
+        _gameTimer = Timer.periodic(const Duration(seconds: 1) , (t) {
+            secondsRemaining--;
+            notifyListeners();
+            if (secondsRemaining <= 0) {
+                t.cancel();
+                _endGame();
+            }
+        });
     }
-  }
+}
 
-  // ── Tag events ──────────────────────────────────────────────────────────
+// ── Tag events ──────────────────────────────────────────────────────────
 
-  void _onTagEvent(TagEvent event) {
+void _onTagEvent(TagEvent event) {
     if (phase != GamePhase.playing) return;
     if (event.type == TagEventType.removed) return;
-
-    final shell = shells[event.shellNumber - 1];
+    
+    final shell          = shells[event.shellNumber - 1];
     if (shell.isFound) return; // already scored, ignore duplicates
-
-    shell.tagId = event.tagId;
-
+    
+    shell.tagId          = event.tagId;
+    
     // Correct = shell scanned at its own reader
     // shells 1-4 → X002, shells 5-8 → X007
     final expectedReader = event.shellNumber <= 4
-        ? GameConfig.reader1Prefix
-        : GameConfig.reader2Prefix;
-    final isCorrect = event.readerPrefix == expectedReader;
-
+    ? GameConfig.reader1Prefix
+: GameConfig.reader2Prefix;
+    final isCorrect      = event.readerPrefix == expectedReader;
+    
     if (isCorrect) {
-      shell.state = ShellState.found;
-      score++;
-      _led.shellCorrect(event.shellNumber);
-      _audio.playCorrect();
+        shell.state = ShellState.found;
+        score++;
+        _led.shellCorrect(event.shellNumber);
+        _audio.playCorrect();
     } else {
-      shell.state = ShellState.wrong;
-      _led.shellWrong(event.shellNumber);
-      _audio.playWrong();
+    shell.state = ShellState.wrong;
+    _led.shellWrong(event.shellNumber);
+    _audio.playWrong();
+}
+
+notifyListeners();
+
+_checkWinCondition();
+}
+
+// ── End game ────────────────────────────────────────────────────────────
+void _checkWinCondition() {
+    if (gameMode == GameMode.single) {
+        if (shells.every((s) => s.isFound)) {
+            _endGame();
+        }
+        return;
     }
-
-    notifyListeners();
-
-    // Check win condition
-    if (shells.every((s) => s.isFound)) {
-      Future.delayed(const Duration(milliseconds: 150),_endGame);
+    // Two-group mode
+    final g1Shells = shells.where((s)   => s.group == 1);
+    final g2Shells = shells.where((s)   => s.group == 2);
+    final g1Done   = g1Shells.every((s) => s.isFound);
+    final g2Done   = g2Shells.every((s) => s.isFound);
+    
+    // Group 1 just finished
+    if (g1Done && !group1Finished) {
+        group1Finished = true;
+        _led.groupCelebration(1);
+        _audio.playCorrect();
+        notifyListeners();
     }
-  }
+    
+    // Group 2 just finished
+    if (g2Done && !group2Finished) {
+        group2Finished = true;
+        _led.groupCelebration(2);
+        _audio.playCorrect();
+        notifyListeners();
+    }
+    
+    // Both done → full victory
+    if (group1Finished && group2Finished) {
+        _endGame();
+    }
+}
 
-  // ── End game ────────────────────────────────────────────────────────────
-
-  void _endGame() {
+void _endGame() {
     _gameTimer?.cancel();
     phase = GamePhase.victory;
     _led.victoryEffect();
     _audio.playVictory();
     _audio.startGameSoundtrack();
     notifyListeners();
-  }
+}
 
-  // ── Return to menu ──────────────────────────────────────────────────────
+// ── Return to menu ──────────────────────────────────────────────────────
 
-  void returnToMenu() {
+void returnToMenu() {
     _gameTimer?.cancel();
     _countdownTimer?.cancel();
     _led.stopAll();
     _audio.stopSoundtrack();
     _audio.stopAll();
     phase = GamePhase.menu;
+    gameMode = GameMode.single;
     _resetShells();
     notifyListeners();
-  }
+}
 
-  // ── Dispose ──────────────────────────────────────────────────────────────
+// ── Dispose ──────────────────────────────────────────────────────────────
 
-  @override
-  void dispose() {
+@override
+void dispose() {
     _rfidSub?.cancel();
     _rfid.dispose();
     _led.dispose();
@@ -180,5 +232,5 @@ class GameController extends ChangeNotifier {
     _countdownTimer?.cancel();
     _gameTimer?.cancel();
     super.dispose();
-  }
+}
 }
