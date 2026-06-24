@@ -61,7 +61,7 @@ class GameConfig {
   static int ledStartForShell(int shell, GameMode mode) {
     if (mode == GameMode.single) {
       // 4 shells per antenna, 12 LEDs each within 34-81
-      final offset = (shell - 1) * 12;
+      final offset = (shell - 1) * 6;
       return singleLedStart + offset;
     } else {
       if (shell <= 4) {
@@ -76,7 +76,7 @@ class GameConfig {
 
   static int ledEndForShell(int shell, GameMode mode) {
     if (mode == GameMode.single) {
-      return ledStartForShell(shell, mode) + 11;
+      return ledStartForShell(shell, mode) + 5;
     } else {
       if (shell <= 4) {
         return ledStartForShell(shell, mode) + 5;
