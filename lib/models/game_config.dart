@@ -76,12 +76,12 @@ class GameConfig {
 
   static int ledEndForShell(int shell, GameMode mode) {
     if (mode == GameMode.single) {
-      return ledStartForShell(shell, mode) + 5;
+      return ledStartForShell(shell, mode) + 6;
     } else {
       if (shell <= 4) {
-        return ledStartForShell(shell, mode) + 5;
+        return ledStartForShell(shell, mode) + 6;
       } else {
-        return ledStartForShell(shell, mode) + 13;
+        return shell == 8 ? ledStartForShell(shell, mode) + 15 : ledStartForShell(shell, mode) + 14;
       }
     }
   }
