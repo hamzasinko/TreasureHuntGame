@@ -91,12 +91,13 @@ class LedService {
   }) async {
     _send('stopFXRange $from $to');
     await Future.delayed(const Duration(milliseconds: 20));
-    _send('strobeRange 03 080 080 $strobeColor $from $to');
+    _send('strobeRange 03 80 0080 $strobeColor $from $to');
     _strobeTimers[key] = Timer(
       Duration(milliseconds: _strobeHoldMs),
-      () {
+       () async {
         if (_strobeTimers.containsKey(key)) {
           _send('stopFXRange $from $to');
+          await Future.delayed(const Duration(milliseconds: 30));
           _send('setBG $holdColor $from $to');
           _strobeTimers.remove(key);
         }
