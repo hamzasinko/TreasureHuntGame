@@ -215,10 +215,12 @@ void returnToMenu() {
     _led.stopAll();
     _audio.stopSoundtrack();
     _audio.stopAll();
-    phase = GamePhase.menu;
-    gameMode = GameMode.single;
-    _resetShells();
-    notifyListeners();
+    Future.delayed(const Duration(milliseconds: 400), () {
+      phase = GamePhase.menu;
+      gameMode = GameMode.single;
+      _resetShells();
+      notifyListeners();
+    });
 }
 
 // ── Dispose ──────────────────────────────────────────────────────────────
